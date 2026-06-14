@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:users-schema": "node scripts/verify-users-schema.js"
   },
   "engines": {
     "node": "20"
