@@ -41,6 +41,7 @@ export default [
         vi: 'readonly',
       },
       sourceType: 'module',
+      ecmaVersion: 'latest',
     },
   },
 ];

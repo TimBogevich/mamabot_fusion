@@ -1,0 +1,67 @@
+{
+  "onboarding": {
+    "welcome": "👋 Welcome to MamaBot! I'll help you track your pregnancy.",
+    "choose_language": "🌍 Choose your language:",
+    "language_ru": "🇷🇺 Русский",
+    "language_en": "🇬🇧 English",
+    "language_set": "✅ Language set!",
+    "ask_lmp": "📅 Enter the first day of your last menstrual period in YYYY-MM-DD format (e.g., 2026-01-15):",
+    "invalid_lmp": "❌ Invalid date format. Please enter the date in YYYY-MM-DD format.",
+    "lmp_confirmed": "✅ Date saved: {date}",
+    "week_calculated": "🤰 You are {week} weeks pregnant!",
+    "already_registered": "👋 You are already registered! Use the menu to navigate."
+  },
+  "menu": {
+    "greeting": "🏠 Main menu — choose a section:",
+    "week_info": "📋 Week Info",
+    "mood_tracker": "😊 Mood Diary",
+    "nutrition": "🍎 Nutrition",
+    "vitamins": "💊 Vitamins",
+    "settings": "⚙️ Settings"
+  },
+  "common": {
+    "back": "🔙 Back",
+    "cancel": "❌ Cancel",
+    "save": "💾 Save",
+    "done": "✅ Done",
+    "yes": "✅ Yes",
+    "no": "❌ No",
+    "error": "❌ An error occurred. Please try again later.",
+    "not_understood": "🤷 Didn't understand that. Please use the menu buttons."
+  },
+  "week_info": {
+    "title": "📋 Week {week} of Pregnancy",
+    "baby_development": "👶 Baby's Development",
+    "mother_changes": "🤱 Changes in Mom's Body",
+    "nutrition_tips": "🥗 Nutrition Tips",
+    "vitamin_recommendations": "💊 Vitamin Recommendations",
+    "symptoms": "⚠️ Symptoms",
+    "baby_size": "📏 Baby's Size"
+  },
+  "mood": {
+    "title": "😊 Mood Diary",
+    "prompt": "How are you feeling today?",
+    "great": "😄 Great",
+    "good": "🙂 Good",
+    "okay": "😐 Okay",
+    "bad": "😟 Bad",
+    "terrible": "😢 Terrible",
+    "saved": "✅ Mood saved!"
+  },
+  "nutrition": {
+    "title": "🍎 Nutrition",
+    "prompt": "Select a meal type:",
+    "meal_types": {
+      "breakfast": "🌅 Breakfast",
+      "lunch": "☀️ Lunch",
+      "dinner": "🌙 Dinner",
+      "snack": "🍪 Snack"
+    },
+    "saved": "✅ Meal saved!"
+  },
+  "notifications": {
+    "new_week": "🎉 Week {week} of pregnancy begins! See what's new.",
+    "vitamin_reminder": "💊 Don't forget to take your vitamins today!",
+    "partner_invite": "👩‍❤️‍👨 Invite your partner — your code: {code}"
+  }
+}
