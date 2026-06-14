@@ -5,6 +5,6 @@ export default defineConfig({
     // Enable globals for jest-like API (describe, it, expect, vi, etc.)
     globals: true,
     environment: "node",
-    include: ["src/**/*.test.js"],
+    include: ["src/**/*.test.js", "test/rules/**/*.test.js"],
   },
 });

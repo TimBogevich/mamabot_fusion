@@ -34,7 +34,7 @@ export default [
   },
   // ESM source type for .mjs files and vitest test files (*.test.js)
   {
-    files: ['**/*.mjs', 'src/**/*.test.js'],
+    files: ['**/*.mjs', 'src/**/*.test.js', 'test/**/*.test.js'],
     languageOptions: {
       globals: {
         ...globals.jest,

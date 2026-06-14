@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Коллекция users ──────────────────────────────────────────
+    // docId = String(chatId). Пользователь (request.auth.uid == chatId)
+    // может читать и писать только свой документ.
+    match /users/{chatId} {
+      allow read, write: if request.auth != null
+                      && request.auth.uid == chatId;
+    }
+
+    // ── Коллекция mood_logs ──────────────────────────────────────
+    // Пользователь может читать/писать только логи, где поле userId
+    // совпадает с его uid. При создании (resource == null) проверяем
+    // request.resource.data.userId; при обновлении — и resource, и request.
+    // Для delete request.resource == null, поэтому проверяем только resource.
+    match /mood_logs/{docId} {
+      allow read: if request.auth != null
+                && resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null
+                  && request.resource.data.userId == request.auth.uid;
+
+      allow update: if request.auth != null
+                  && resource.data.userId == request.auth.uid
+                  && request.resource.data.userId == request.auth.uid;
+
+      allow delete: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+    }
+
+    // ── Коллекция nutrition_logs ─────────────────────────────────
+    // Аналогично mood_logs: изоляция по полю userId.
+    match /nutrition_logs/{docId} {
+      allow read: if request.auth != null
+                && resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null
+                  && request.resource.data.userId == request.auth.uid;
+
+      allow update: if request.auth != null
+                  && resource.data.userId == request.auth.uid
+                  && request.resource.data.userId == request.auth.uid;
+
+      allow delete: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+    }
+
+    // ── Коллекция pregnancy_data ─────────────────────────────────
+    // Чтение разрешено любому аутентифицированному пользователю.
+    // Запись — только через firebase-admin (сервер).
+    match /pregnancy_data/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ── Коллекция partners (заглушка) ────────────────────────────
+    // Схема partners будет уточнена в будущей задаче.
+    // Пока: чтение только аутентифицированным, запись только серверу.
+    match /partners/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ── Default deny ─────────────────────────────────────────────
+    // Всё, что не разрешено явно — запрещено.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

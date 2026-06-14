@@ -6,6 +6,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:node": "node --test test/**/*.test.js",
+    "test:rules": "vitest run test/rules/",
     "verify:users-schema": "node scripts/verify-users-schema.js",
     "deploy": "firebase deploy --only functions"
   },
@@ -17,7 +18,9 @@
     "firebase-functions": "^6.0.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
     "eslint": "^9.39.4",
+    "firebase": "^12.14.0",
     "vitest": "^4.1.8",
     "jest": "^30.4.2"
   }
