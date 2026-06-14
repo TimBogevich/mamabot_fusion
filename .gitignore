@@ -1,2 +1,7 @@
 node_modules/
 .env
+.fusion
+.pi
+fusion.db
+fusion.db-wal
+fusion.db-shm
