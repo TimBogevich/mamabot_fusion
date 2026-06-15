@@ -41,6 +41,10 @@ const CHAT_ID_1 = 900000001;
 const CHAT_ID_2 = 900000002;
 const CHAT_ID_3 = 900000003;
 const CHAT_ID_4 = 900000004;
+const CHAT_ID_5 = 900000005;
+const CHAT_ID_6 = 900000006;
+const CHAT_ID_7 = 900000007;
+const CHAT_ID_8 = 900000008;
 
 const BASE_USER = {
   userId: '900000000',
@@ -92,6 +96,10 @@ afterAll(async () => {
     deleteUser(CHAT_ID_2),
     deleteUser(CHAT_ID_3),
     deleteUser(CHAT_ID_4),
+    deleteUser(CHAT_ID_5),
+    deleteUser(CHAT_ID_6),
+    deleteUser(CHAT_ID_7),
+    deleteUser(CHAT_ID_8),
   ]);
 });
 
@@ -177,6 +185,74 @@ describe('users — Firestore integration', () => {
       const user = await getUser(CHAT_ID_4);
       expect(user).not.toBeNull();
       expect(user.eddDate).toBeUndefined();
+    });
+  });
+
+  describe('lastNotifiedWeek field round-trip', () => {
+    if (!firestoreReady) {
+      it.skip('no Firestore backend — test skipped');
+      return;
+    }
+
+    it('should save lastNotifiedWeek via updateUser and return it via getUser', async () => {
+      // Create a user without lastNotifiedWeek
+      await createUser(CHAT_ID_5, {
+        ...BASE_USER,
+        language: 'ru',
+        role: 'mom',
+      });
+
+      // Update with lastNotifiedWeek
+      await updateUser(CHAT_ID_5, { lastNotifiedWeek: 14 });
+
+      // Read back and verify
+      const user = await getUser(CHAT_ID_5);
+      expect(user).not.toBeNull();
+      expect(user.lastNotifiedWeek).toBe(14);
+    });
+
+    it('should allow setting lastNotifiedWeek directly via createUser', async () => {
+      await createUser(CHAT_ID_6, {
+        ...BASE_USER,
+        language: 'ru',
+        role: 'mom',
+        lastNotifiedWeek: 8,
+      });
+
+      const user = await getUser(CHAT_ID_6);
+      expect(user).not.toBeNull();
+      expect(user.lastNotifiedWeek).toBe(8);
+    });
+
+    it('should update an existing lastNotifiedWeek value', async () => {
+      // Create with initial lastNotifiedWeek
+      await createUser(CHAT_ID_7, {
+        ...BASE_USER,
+        language: 'ru',
+        role: 'mom',
+        lastNotifiedWeek: 5,
+      });
+
+      // Update lastNotifiedWeek to a new value
+      await updateUser(CHAT_ID_7, { lastNotifiedWeek: 20 });
+
+      // Read back and verify new value
+      const user = await getUser(CHAT_ID_7);
+      expect(user).not.toBeNull();
+      expect(user.lastNotifiedWeek).toBe(20);
+    });
+
+    it('should return undefined for lastNotifiedWeek when user has no notifications sent', async () => {
+      // Create user WITHOUT lastNotifiedWeek
+      await createUser(CHAT_ID_8, {
+        ...BASE_USER,
+        language: 'ru',
+        role: 'mom',
+      });
+
+      const user = await getUser(CHAT_ID_8);
+      expect(user).not.toBeNull();
+      expect(user.lastNotifiedWeek).toBeUndefined();
     });
   });
 });
