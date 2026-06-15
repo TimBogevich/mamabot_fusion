@@ -344,8 +344,9 @@ if (!result.valid) {
   - `functions/src/schemas/__tests__/pregnancy_data.integration.test.js`
   - `functions/test/moodLogs.test.js` — `node --test`
   - `functions/test/nutritionLogs.test.js` — `node --test`
-- **Скрипт верификации:**
-  - `functions/scripts/verify-pregnancy-data.js`
+- **Скрипты:**
+  - `functions/scripts/seed-pregnancy-data.js` — загрузка 40 недель (ru + en) в `pregnancy_data`
+  - `functions/scripts/verify-pregnancy-data.js` — верификация схемы документа
 - **Индексы:**
   - `firestore.indexes.json` (корень проекта)
 - **Обработчики:**
