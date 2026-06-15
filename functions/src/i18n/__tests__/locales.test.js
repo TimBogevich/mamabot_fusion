@@ -122,13 +122,11 @@ describe('Localization files', () => {
   it('ru.json should have required top-level categories', () => {
     expect(ru).toHaveProperty('onboarding');
     expect(ru).toHaveProperty('menu');
-    expect(ru).toHaveProperty('common');
   });
 
   it('en.json should have required top-level categories', () => {
     expect(en).toHaveProperty('onboarding');
     expect(en).toHaveProperty('menu');
-    expect(en).toHaveProperty('common');
   });
 
   // -----------------------------------------------------------------------

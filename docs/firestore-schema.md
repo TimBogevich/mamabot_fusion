@@ -80,6 +80,24 @@ Telegram `chat.id` is used as the document ID to guarantee natural uniqueness an
 
 ### Indexes
 
+| Поле | Тип | Обязательное | По умолчанию | Описание |
+|------|-----|-------------|-------------|----------|
+| `chatId` | `number` | Да | — | Telegram chat ID. Используется как идентификатор документа. |
+| `userId` | `string` | Да | — | Telegram user ID из `update.message.from.id`. |
+| `firstName` | `string` | Да | — | Имя пользователя в Telegram. |
+| `lastName` | `string` | Нет | — | Фамилия пользователя в Telegram (опционально). |
+| `username` | `string` | Нет | — | @username пользователя в Telegram (опционально). |
+| `language` | `'ru' \| 'en'` | Да | `'ru'` | Выбранный язык интерфейса. |
+| `lmpDate` | `string` | Нет | — | Дата первого дня последней менструации в формате ISO (`YYYY-MM-DD`). |
+| `currentWeek` | `number` | Нет | — | Вычисленная текущая неделя беременности (1–42). |
+| `eddDate` | `string` | Нет | — | Предполагаемая дата родов (EDD) в формате ISO, рассчитанная по правилу Негеле. |
+| `lastNotifiedWeek` | `number` | Нет | — | Номер недели беременности, на которую была отправлена последняя еженедельная рассылка (1–42). Обновляется атомарно функцией `sendWeeklyNotifications` сразу после отправки уведомления. |
+| `partnerCode` | `string` | Нет | — | 6-символьный код-приглашение для связи с партнёром. |
+| `role` | `'mom' \| 'partner'` | Да | `'mom'` | Роль пользователя: будущая мама или партнёр. |
+| `createdAt` | `Timestamp` | Да | `serverTimestamp()` | Время создания документа (устанавливается Firestore). |
+| `updatedAt` | `Timestamp` | Да | `serverTimestamp()` | Время последнего обновления документа (устанавливается Firestore). |
+
+
 No additional composite indexes required for `users` — `chatId` is the document ID and indexed automatically.
 
 ### Sample document
@@ -94,6 +112,8 @@ No additional composite indexes required for `users` — `chatId` is the documen
   "language": "ru",
   "lmpDate": "2026-01-15",
   "currentWeek": 21,
+  "eddDate": "2026-10-22",
+  "lastNotifiedWeek": 21,
   "partnerCode": "ABC123",
   "role": "mom",
   "createdAt": "2026-06-14T10:30:00.000Z",
@@ -118,6 +138,17 @@ No additional composite indexes required for `users` — `chatId` is the documen
 1. **Creation** — on first bot interaction (`/start`). Fields: `chatId`, `userId`, `firstName`, `lastName`, `username`, `language`, `role`.
 2. **Updates** — on settings or pregnancy progress changes: `language`, `lmpDate`, `currentWeek`, `partnerCode`.
 3. **Deletion** — not implemented. Users can request data removal via support.
+
+| Сценарий | Операция | Код |
+|----------|----------|-----|
+| Регистрация пользователя | Создание документа | `createUser(chatId, data)` |
+| Загрузка профиля при старте | Чтение документа | `getUser(chatId)` |
+| Смена языка | Обновление поля `language` | `updateUser(chatId, { language: 'en' })` |
+| Установка даты LMP | Обновление поля `lmpDate` | `updateUser(chatId, { lmpDate: '2026-03-01' })` |
+| Обновление роли | Обновление поля `role` | `updateUser(chatId, { role: 'partner' })` |
+| Создание кода партнёра | Обновление поля `partnerCode` | `updateUser(chatId, { partnerCode: 'XYZ789' })` |
+| Еженедельная рассылка уведомлений | Обновление поля `lastNotifiedWeek` | `updateUser(chatId, { lastNotifiedWeek: week })` в `sendWeeklyNotifications` |
+
 
 ---
 
@@ -231,7 +262,152 @@ Rules are defined in `firestore.rules` (project root).
 | `partners/{partnerCode}` | Mom (`momChatId == uid`) or linked partner (`partnerChatId == uid`) | Server only |
 | Everything else | Denied | Denied |
 
+| `users/{chatId}` | Только владелец (`request.auth.uid == chatId`) | Только владелец |
+| `mood_logs/{docId}` | Только владелец (`resource.data.userId == request.auth.uid`) | Только владелец |
+| `nutrition_logs/{docId}` | Только владелец (`resource.data.userId == request.auth.uid`) | Только владелец |
+| `pregnancy_data/{docId}` | Любой аутентифицированный | Только сервер (firebase-admin) |
+| `partners/{partnerCode}` | Мама (`momChatId == uid`) или привязанный партнёр (`partnerChatId == uid`) | Только сервер |
+| Всё остальное | Запрещено | Запрещено |
+
+
 ### Testing
 
 Rules are covered by automated tests (Firestore emulator + `@firebase/rules-unit-testing`).
 Run: `cd functions && npm run test:rules`
+
+Правила покрыты автоматическими тестами (Firestore emulator + `@firebase/rules-unit-testing`).
+Запуск: `cd functions && npm run test:rules`
+
+---
+
+# Схема коллекции `partners`
+
+## Обзор
+
+Коллекция `partners` хранит связки (partnership) между мамой и её партнёром. Каждый документ представляет одно партнёрство, создаваемое мамой через генерацию 6-символьного кода-приглашения (`partnerCode`). Партнёр вводит этот код, и бот связывает их, обновляя документ.
+
+Коллекция обеспечивает:
+- Логическую связь между двумя пользователями (мамой и партнёром).
+- Безопасный доступ: мама и привязанный партнёр могут читать документ, но запись — только через сервер (firebase-admin).
+- Возможность отслеживать статус: `pending` (ожидает привязки) или `active` (партнёр привязан).
+
+---
+
+## Идентификатор документа
+
+```
+partnerCode
+```
+
+**Почему:** `partnerCode` — уникальный 6-символьный код (латиница + цифры верхнего регистра), генерируемый мамой. Использование `partnerCode` в качестве идентификатора документа гарантирует:
+- Естественную уникальность — один документ на код-приглашение.
+- Быстрый поиск по `partnerCode` без необходимости в составном индексе — прямой lookup при вводе кода партнёром.
+- Простую интеграцию: код является и идентификатором, и полем документа.
+
+---
+
+## Справочник полей
+
+| Поле | Тип | Обязательное | По умолчанию | Описание |
+|------|-----|-------------|-------------|----------|
+| `partnerCode` | `string` | Да | — | 6-символьный код-приглашение (латиница + цифры верхнего регистра, `/^[A-Z0-9]{6}$/`). Также используется как ID документа. |
+| `momChatId` | `string` | Да | — | Telegram chat ID мамы (stringified, для сравнения в Firestore Rules). |
+| `partnerChatId` | `string` | Нет | `null` | Telegram chat ID партнёра. `null` до момента привязки. После привязки — `string`. |
+| `status` | `'pending' \| 'active'` | Да | `'pending'` | Статус партнёрства: `'pending'` — код создан, партнёр ещё не привязан; `'active'` — партнёр привязан. |
+| `createdAt` | `Timestamp` | Да | `serverTimestamp()` | Время создания документа (устанавливается Firestore). |
+| `updatedAt` | `Timestamp` | Да | `serverTimestamp()` | Время последнего обновления документа (устанавливается Firestore). |
+
+---
+
+## Индексы
+
+Для коллекции `partners` требуется один составной индекс:
+
+- **Поле:** `momChatId` (ASC) — для выполнения запроса `getPartnershipByMom()` (`.where('momChatId', '==', momChatId).limit(1)`).
+
+Индекс необходимо создать в Firebase Console:
+
+| Коллекция | Поле | Направление |
+|-----------|------|-------------|
+| `partners` | `momChatId` | Ascending |
+
+> **Примечание:** Если индекс не создан, запрос `getPartnershipByMom()` будет отклонён Firestore с ошибкой `FAILED_PRECONDITION: The query requires an index.`.
+
+---
+
+## Примеры документов
+
+### Партнёрство в статусе `pending` (ожидает привязки)
+
+```json
+{
+  "partnerCode": "XYZ789",
+  "momChatId": "333",
+  "partnerChatId": null,
+  "status": "pending",
+  "createdAt": "2026-06-15T10:00:00.000Z",
+  "updatedAt": "2026-06-15T10:00:00.000Z"
+}
+```
+
+### Партнёрство в статусе `active` (партнёр привязан)
+
+```json
+{
+  "partnerCode": "ABC123",
+  "momChatId": "111",
+  "partnerChatId": "222",
+  "status": "active",
+  "createdAt": "2026-06-15T09:00:00.000Z",
+  "updatedAt": "2026-06-15T09:30:00.000Z"
+}
+```
+
+---
+
+## Сценарии доступа
+
+| Сценарий | Операция | Код |
+|----------|----------|-----|
+| Создание кода-приглашения | Создание документа (сервер) | `createPartner(code, { momChatId })` |
+| Привязка партнёра | Обновление документа (сервер) | `linkPartner(code, partnerChatId)` |
+| Чтение документа по коду | Прямой lookup | `getPartner(code)` |
+| Поиск по ID мамы | Запрос с фильтром | `getPartnershipByMom(momChatId)` |
+
+---
+
+## Жизненный цикл документа
+
+1. **`pending`** — Документ создаётся, когда мама генерирует код-приглашение. Поля: `partnerCode`, `momChatId`, `partnerChatId: null`, `status: 'pending'`.
+2. **`active`** — Партнёр вводит код и бот привязывает его. Обновляются: `partnerChatId`, `status: 'active'`, `updatedAt`.
+3. **Удаление** — В текущей версии не предусмотрено. При необходимости партнёрство может быть удалено через сервер.
+
+---
+
+## Связь с `users`
+
+Коллекция `partners` тесно связана с коллекцией `users`:
+
+- **`users.partnerCode`** — Поле в документе мамы (`users/{momChatId}`), содержащее тот же 6-символьный код. Это поле используется для отображения кода маме и для поиска партнёрства.
+- **`users.role`** — Роль пользователя (`'mom'` или `'partner'`). Партнёр получает роль `'partner'` после привязки.
+- **`partners.{partnerCode}.momChatId`** — Telegram chat ID мамы, связывающий документ с её профилем в `users`.
+- **`partners.{partnerCode}.partnerChatId`** — Telegram chat ID партнёра, связывающий документ с его профилем в `users`.
+
+Таким образом, три идентификатора (`partnerCode`, `momChatId`, `partnerChatId`) обеспечивают полную связь между коллекциями.
+
+---
+
+## Правила безопасности Firestore
+
+| Коллекция | Чтение | Запись |
+|-----------|--------|--------|
+| `partners/{partnerCode}` | Мама (`momChatId == uid`) или привязанный партнёр (`partnerChatId == uid`) | Только сервер |
+
+### Принципы уточнённого правила
+
+- Мама может читать свой partnership, так как поле `momChatId` совпадает с её `request.auth.uid`.
+- Привязанный партнёр может читать тот же документ, так как поле `partnerChatId` совпадает с его `request.auth.uid`.
+- Сторонний пользователь (не мама и не партнёр) не может прочитать документ.
+- Запись разрешена только через firebase-admin (серверные функции).
+- Поле `partnerChatId` проверяется как есть: для `pending` (null) доступ есть только у мамы; для `active` доступ есть у обоих.
+
