@@ -42,7 +42,7 @@ function clearFirebaseCache() {
 // Inject mock before any module load
 injectFirebaseMock({ telegram: { token: "test:mock-telegram-token" } });
 
-const { TELEGRAM_API, TELEGRAM_TOKEN, sendMessage } = req("../../utils/telegram");
+const { TELEGRAM_API, TELEGRAM_TOKEN, sendMessage, answerCallbackQuery } = req("../../utils/telegram");
 
 const originalFetch = globalThis.fetch;
 
@@ -115,5 +115,68 @@ describe("sendMessage", () => {
     await expect(sendMessage(12345, "Hello")).rejects.toThrow(
       'Telegram API error: 400 {"description":"Bad Request"}',
     );
+  });
+});
+
+describe("answerCallbackQuery", () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it("makes POST request to correct URL with callback_query_id", async () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+
+    await answerCallbackQuery("cb_123");
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    const [url, opts] = globalThis.fetch.mock.calls[0];
+    expect(url).toBe(`${TELEGRAM_API}/bot${TELEGRAM_TOKEN}/answerCallbackQuery`);
+    expect(JSON.parse(opts.body)).toEqual({
+      callback_query_id: "cb_123",
+    });
+  });
+
+  it("includes text and show_alert when provided in options", async () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+
+    await answerCallbackQuery("cb_456", { text: "Done!", show_alert: true });
+
+    const [, opts] = globalThis.fetch.mock.calls[0];
+    expect(JSON.parse(opts.body)).toEqual({
+      callback_query_id: "cb_456",
+      text: "Done!",
+      show_alert: true,
+    });
+  });
+
+  it("does NOT throw on non-OK response, returns parsed JSON", async () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: false,
+      status: 400,
+      text: async () => "Bad Request",
+      json: async () => ({ ok: false, error_code: 400, description: "Bad Request" }),
+    });
+
+    const result = await answerCallbackQuery("cb_789");
+
+    expect(result).toEqual({ ok: false, error_code: 400, description: "Bad Request" });
+  });
+
+  it("returns graceful error object on network failure (fetch rejected)", async () => {
+    globalThis.fetch.mockRejectedValue(new Error("Network failure"));
+
+    const result = await answerCallbackQuery("cb_000");
+
+    expect(result).toEqual({ ok: false, error: "Network failure" });
   });
 });

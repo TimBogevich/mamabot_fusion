@@ -1,5 +1,6 @@
 const {onRequest} = require("firebase-functions/v2/https");
 const {TELEGRAM_API, TELEGRAM_TOKEN, sendMessage} = require("./src/utils/telegram");
+const { routeCallback } = require('./src/handlers/router');
 const languageDialog = require("./src/handlers/onboarding/languageDialog");
 
 exports.webhook = onRequest(
@@ -18,28 +19,23 @@ exports.webhook = onRequest(
     try {
       const update = req.body;
 
-      // 1. Handle callback queries (inline button presses)
+      // 1. Обработка callback_query (inline-кнопки)
       if (update.callback_query) {
         const chatId = update.callback_query.message.chat.id;
-        const data = update.callback_query.data;
+        const callbackData = update.callback_query.data;
         const from = update.callback_query.from;
 
-        if (data === 'lang_ru' || data === 'lang_en') {
-          const userInfo = {
-            userId: String(from.id),
-            firstName: from.first_name || '',
-            lastName: from.last_name || '',
-            username: from.username || '',
-          };
-          await languageDialog.handleLanguageChoice(chatId, data, userInfo);
-        }
+        await routeCallback(chatId, callbackData, {
+          callbackQueryId: update.callback_query.id,
+          from: from,
+        });
 
         res.sendStatus(200);
         return;
       }
 
-      // 2. Early return for non-message updates
-      if (!update.message || !update.message.text) {
+      // 2. Ранний выход для не-сообщений
+      if (!update || !update.message || !update.message.text) {
         res.sendStatus(200);
         return;
       }
