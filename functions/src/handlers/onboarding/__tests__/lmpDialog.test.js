@@ -295,8 +295,14 @@ describe('handleLmpInput', () => {
 
     // Default mock implementations
     mockT.mockImplementation((_chatId, key, vars) => {
-      if (key === 'onboarding.week_calculated') {
-        return Promise.resolve(`🤰 Ты на ${vars.week} неделе беременности! Предполагаемая дата родов: ${vars.edc}.`);
+      if (key === 'onboarding.edd_confirm') {
+        return Promise.resolve(`📅 ПДР: ${vars.edd}. Верно?`);
+      }
+      if (key === 'onboarding.edd_correct') {
+        return Promise.resolve('✅ Верно');
+      }
+      if (key === 'onboarding.edd_edit') {
+        return Promise.resolve('✏️ Исправить');
       }
       if (key === 'onboarding.invalid_date') {
         return Promise.resolve('❌ Неверный формат даты.');
@@ -334,16 +340,35 @@ describe('handleLmpInput', () => {
       });
     });
 
-    it('should send confirmation message with week and EDC', async () => {
+    it('should send EDD confirmation message with inline keyboard', async () => {
       await handleLmpInput(CHAT_ID, '15.03.2026');
-      expect(mockSendMessage).toHaveBeenCalledWith(
-        CHAT_ID,
-        expect.stringContaining('14'),
-      );
+
+      expect(mockT).toHaveBeenCalledWith(CHAT_ID, 'onboarding.edd_confirm', { edd: '2026-12-20' });
+      expect(mockT).toHaveBeenCalledWith(CHAT_ID, 'onboarding.edd_correct');
+      expect(mockT).toHaveBeenCalledWith(CHAT_ID, 'onboarding.edd_edit');
+
       expect(mockSendMessage).toHaveBeenCalledWith(
         CHAT_ID,
         expect.stringContaining('2026-12-20'),
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '✅ Верно', callback_data: 'onboarding_confirm_edd' }],
+              [{ text: '✏️ Исправить', callback_data: 'onboarding_edit_edd' }],
+            ],
+          },
+        },
       );
+    });
+
+    it('should use onboarding_confirm_edd and onboarding_edit_edd as callback_data', async () => {
+      await handleLmpInput(CHAT_ID, '15.03.2026');
+
+      const sendCall = mockSendMessage.mock.calls[0];
+      const keyboard = sendCall[2].reply_markup.inline_keyboard;
+
+      expect(keyboard[0][0].callback_data).toBe('onboarding_confirm_edd');
+      expect(keyboard[1][0].callback_data).toBe('onboarding_edit_edd');
     });
 
     it('should return { success: true, lmpDate, week, edc }', async () => {

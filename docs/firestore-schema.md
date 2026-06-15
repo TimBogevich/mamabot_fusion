@@ -106,7 +106,7 @@ No additional composite indexes required for `users` — `chatId` is the documen
 | Register user | Create document | `createUser(chatId, data)` |
 | Load profile on start | Read document | `getUser(chatId)` |
 | Change language | Update `language` | `updateUser(chatId, { language: 'en' })` |
-| Set LMP date | Update `lmpDate` | `updateUser(chatId, { lmpDate: '2026-03-01' })` |
+| Set LMP date | Update `lmpDate`, `currentWeek` | `updateUser(chatId, { lmpDate: '2026-03-01', currentWeek: 14 })` → sends EDD confirmation with Верно/Исправить buttons |
 | Update role | Update `role` | `updateUser(chatId, { role: 'partner' })` |
 | Create partner code | Update `partnerCode` | `updateUser(chatId, { partnerCode: 'XYZ789' })` |
 

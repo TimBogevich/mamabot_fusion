@@ -202,7 +202,7 @@ function calculateEdd(lmpDateString) {
  * 3. If valid, calls calculatePregnancyWeek() to compute the week
  * 4. Computes EDC via calculateEdd()
  * 5. Saves lmpDate and currentWeek to Firestore via updateUser()
- * 6. Sends confirmation message with week number and EDC
+ * 6. Sends EDD confirmation with Верно/Исправить inline keyboard
  * 7. Returns { success: true, lmpDate, week, edc }
  *
  * @param {number|string} chatId - Telegram chat ID
@@ -248,9 +248,20 @@ async function handleLmpInput(chatId, text) {
     return { success: false, error: 'error.generic' };
   }
 
-  // Step 6: Send confirmation
-  const confirmText = await _t(chatId, 'onboarding.week_calculated', { week: String(week), edc });
-  await _sendMessage(chatId, confirmText);
+  // Step 6: Send EDD confirmation with inline keyboard
+  const eddConfirmText = await _t(chatId, 'onboarding.edd_confirm', { edd: edc });
+  const eddCorrectLabel = await _t(chatId, 'onboarding.edd_correct');
+  const eddEditLabel = await _t(chatId, 'onboarding.edd_edit');
+
+  /** @type {{ inline_keyboard: Array<Array<{text: string, callback_data: string}>> }} */
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: eddCorrectLabel, callback_data: 'onboarding_confirm_edd' }],
+      [{ text: eddEditLabel, callback_data: 'onboarding_edit_edd' }],
+    ],
+  };
+
+  await _sendMessage(chatId, eddConfirmText, { reply_markup: keyboard });
 
   return { success: true, lmpDate: isoDate, week, edc };
 }
