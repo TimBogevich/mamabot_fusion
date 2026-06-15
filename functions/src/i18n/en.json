@@ -22,7 +22,7 @@
     "edd_invalid": "❌ Invalid date. Please enter a valid due date in DD.MM.YYYY format.",
     "edd_invalid_format": "❌ Invalid date format. Please enter the date in DD.MM.YYYY format.",
     "edd_prompt": "📅 Enter the estimated due date in DD.MM.YYYY format:",
-    "edd_saved": "✅ Due date saved: {edd}.",
+    "edd_saved": "✅ EDD {{edd}} saved! You've successfully completed setup.",
     "edd_too_far": "❌ Due date is too far from the last menstrual period (maximum 300 days). Please enter a valid date.",
     "edd_too_late": "❌ Due date is too far from the last menstrual period (maximum 300 days). Please enter a valid date."
   },
