@@ -9,6 +9,7 @@
     "invalid_lmp": "❌ Invalid date format. Please enter the date in YYYY-MM-DD format.",
     "lmp_confirmed": "✅ Date saved: {date}",
     "week_calculated": "🤰 You are {week} weeks pregnant!",
+    "edd_confirmed": "✅ EDD {{edd}} saved! You've successfully completed setup.",
     "already_registered": "👋 You are already registered! Use the menu to navigate."
   },
   "menu": {

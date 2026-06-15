@@ -14,7 +14,8 @@
     "week_calculated": "🤰 You are {{week}} weeks pregnant! Estimated due date: {{edc}}.",
     "edd_confirm": "📅 Estimated due date: {{edd}}. Correct?",
     "edd_correct": "✅ Correct",
-    "edd_edit": "✏️ Edit"
+    "edd_edit": "✏️ Edit",
+    "edd_confirmed": "✅ EDD {{edd}} saved! You've successfully completed setup."
   },
   "menu": {
     "week_info": "📋 Week Info",

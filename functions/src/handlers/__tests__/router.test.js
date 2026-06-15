@@ -24,6 +24,7 @@ const mockSendMessage = vi.fn();
 const mockAnswerCallbackQuery = vi.fn();
 const mockShowMainMenu = vi.fn();
 const mockHandleLanguageChoice = vi.fn();
+const mockHandleConfirmEdd = vi.fn();
 
 // ---------------------------------------------------------------------------
 // Module under test — loads real modules but we inject mocks via __inject()
@@ -44,6 +45,7 @@ __inject({
   answerCallbackQuery: mockAnswerCallbackQuery,
   showMainMenu: mockShowMainMenu,
   handleLanguageChoice: mockHandleLanguageChoice,
+  handleConfirmEdd: mockHandleConfirmEdd,
 });
 
 // ---------------------------------------------------------------------------
@@ -74,6 +76,7 @@ function restoreInjectDefaults() {
     answerCallbackQuery: mockAnswerCallbackQuery,
     showMainMenu: mockShowMainMenu,
     handleLanguageChoice: mockHandleLanguageChoice,
+    handleConfirmEdd: mockHandleConfirmEdd,
   });
 }
 
@@ -81,6 +84,7 @@ function setupDefaults() {
   mockT.mockResolvedValue('❌ Неизвестная команда. Пожалуйста, воспользуйся меню.');
   mockAnswerCallbackQuery.mockResolvedValue({ ok: true });
   mockHandleLanguageChoice.mockResolvedValue({ status: 'language_set', language: 'ru' });
+  mockHandleConfirmEdd.mockResolvedValue({ status: 'edd_confirmed', eddDate: '2026-12-20' });
   mockShowMainMenu.mockResolvedValue({ message_id: 42 });
   mockSendMessage.mockResolvedValue({ ok: true });
 }
@@ -366,6 +370,60 @@ describe('routeCallback — возврат в главное меню', () => {
     await routeCallback(CHAT_ID, 'lang_ru', DEFAULT_CONTEXT);
 
     expect(mockShowMainMenu).not.toHaveBeenCalled();
+  });
+});
+
+describe('routeCallback — маршрутизация onboarding_confirm_edd', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    restoreInjectDefaults();
+    setupDefaults();
+  });
+
+  it('onboarding_confirm_edd вызывает handleConfirmEdd с chatId', async () => {
+    await routeCallback(CHAT_ID, 'onboarding_confirm_edd', DEFAULT_CONTEXT);
+
+    expect(mockHandleConfirmEdd).toHaveBeenCalledTimes(1);
+    expect(mockHandleConfirmEdd).toHaveBeenCalledWith(CHAT_ID);
+  });
+
+  it('onboarding_confirm_edd не вызывает handleLanguageChoice', async () => {
+    await routeCallback(CHAT_ID, 'onboarding_confirm_edd', DEFAULT_CONTEXT);
+
+    expect(mockHandleLanguageChoice).not.toHaveBeenCalled();
+  });
+
+  it('onboarding_confirm_edd не вызывает showMainMenu через роутер', async () => {
+    await routeCallback(CHAT_ID, 'onboarding_confirm_edd', DEFAULT_CONTEXT);
+
+    expect(mockShowMainMenu).not.toHaveBeenCalled();
+  });
+
+  it('при успешном onboarding_confirm_edd возвращается результат обработчика', async () => {
+    const result = await routeCallback(CHAT_ID, 'onboarding_confirm_edd', DEFAULT_CONTEXT);
+
+    expect(result).toEqual({ status: 'edd_confirmed', eddDate: '2026-12-20' });
+  });
+
+  it('когда handleConfirmEdd = null, onboarding_confirm_edd → not-implemented', async () => {
+    __inject({ handleConfirmEdd: null });
+
+    const result = await routeCallback(CHAT_ID, 'onboarding_confirm_edd', DEFAULT_CONTEXT);
+
+    expect(result.status).toBe('not_implemented');
+    expect(mockShowMainMenu).toHaveBeenCalledWith(CHAT_ID);
+  });
+
+  it('onboarding_edit_edd (не реализован) → not-implemented', async () => {
+    const result = await routeCallback(CHAT_ID, 'onboarding_edit_edd', DEFAULT_CONTEXT);
+
+    expect(result).toEqual({
+      status: 'not_implemented',
+      domain: 'onboarding',
+      callbackData: 'onboarding_edit_edd',
+    });
+    expect(mockHandleConfirmEdd).not.toHaveBeenCalled();
+    expect(mockHandleLanguageChoice).not.toHaveBeenCalled();
   });
 });
 

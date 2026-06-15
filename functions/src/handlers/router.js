@@ -31,6 +31,14 @@ try {
   // FN-024 ещё не смержен — lang_ru/lang_en будут обработаны как unknown
 }
 
+/** @type {((chatId: number|string) => Promise<Object>)|null} */
+let _handleConfirmEdd = null;
+try {
+  _handleConfirmEdd = require('./onboarding/confirmEdd').handleConfirmEdd;
+} catch (_err) {
+  // FN-006 ещё не смержен — onboarding_confirm_edd будет обработан как not-implemented
+}
+
 // ---------------------------------------------------------------------------
 // Внутренние ссылки на зависимости (мутабельные для тестирования)
 // ---------------------------------------------------------------------------
@@ -102,6 +110,7 @@ function resolveDomain(callbackData) {
 /**
  * Обработчик домена 'onboarding'.
  * Делегирует callback'и lang_ru/lang_en в handleLanguageChoice (FN-024).
+ * Делегирует onboarding_confirm_edd в handleConfirmEdd (FN-006).
  * Будущие onboarding_* callback'и также попадают сюда.
  *
  * @param {number|string} chatId - Telegram chat ID
@@ -119,6 +128,13 @@ async function handleOnboarding(chatId, callbackData, context) {
       username: from.username || '',
     };
     return _handleLanguageChoice(chatId, callbackData, userInfo);
+  }
+
+  if (callbackData === 'onboarding_confirm_edd') {
+    if (_handleConfirmEdd) {
+      return _handleConfirmEdd(chatId);
+    }
+    return handleNotImplemented(chatId, callbackData);
   }
 
   // Для будущих onboarding_* callback'ов или при отсутствии FN-024
@@ -250,6 +266,7 @@ async function handleUnknownCallback(chatId) {
  * @param {Function} [deps.answerCallbackQuery] - Mock answerCallbackQuery
  * @param {Function|null} [deps.showMainMenu] - Mock showMainMenu (or null to simulate FN-027 missing)
  * @param {Function|null} [deps.handleLanguageChoice] - Mock handleLanguageChoice (or null to simulate FN-024 missing)
+ * @param {Function|null} [deps.handleConfirmEdd] - Mock handleConfirmEdd (or null to simulate FN-006 missing)
  * @returns {void}
  *
  * @example
@@ -264,6 +281,7 @@ function __inject(deps) {
   if (deps.answerCallbackQuery) _answerCallbackQuery = deps.answerCallbackQuery;
   if (deps.showMainMenu !== undefined) _showMainMenu = deps.showMainMenu;
   if (deps.handleLanguageChoice !== undefined) _handleLanguageChoice = deps.handleLanguageChoice;
+  if (deps.handleConfirmEdd !== undefined) _handleConfirmEdd = deps.handleConfirmEdd;
 }
 
 module.exports = { routeCallback, __inject };
