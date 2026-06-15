@@ -1,0 +1,32 @@
+{
+  "onboarding": {
+    "welcome": "👋 Welcome to MamaBot, {{name}}! I'll help you track your pregnancy.",
+    "choose_language": "🌍 Choose your language:",
+    "ask_lmp": "📅 Enter the first day of your last menstrual period in YYYY-MM-DD format:",
+    "lmp_format_hint": "Please use YYYY-MM-DD format, e.g. 2026-01-15.",
+    "invalid_date": "❌ Invalid date format. Please enter the date in YYYY-MM-DD format.",
+    "date_in_future": "❌ Date cannot be in the future. Please enter a valid date.",
+    "week_calculated": "🤰 You are {{week}} weeks pregnant! Estimated due date: {{edc}}."
+  },
+  "menu": {
+    "week_info": "📋 Week Info",
+    "mood_diary": "😊 Mood Diary",
+    "nutrition": "🍎 Nutrition",
+    "settings": "⚙️ Settings",
+    "invite_partner": "👩‍❤️‍👨 Invite Partner",
+    "back": "🔙 Back",
+    "my_week": "📋 My Week"
+  },
+  "settings": {
+    "title": "⚙️ Settings",
+    "change_language": "🌍 Change Language",
+    "view_lmp": "📅 My LMP Date",
+    "reset_data": "🗑️ Reset All Data",
+    "reset_confirm": "⚠️ Are you sure? All data will be permanently deleted and cannot be recovered."
+  },
+  "error": {
+    "unknown_callback": "❌ Unknown command. Please use the menu.",
+    "generic": "❌ An error occurred. Please try again later.",
+    "session_expired": "⏰ Session expired. Please start again: /start"
+  }
+}
