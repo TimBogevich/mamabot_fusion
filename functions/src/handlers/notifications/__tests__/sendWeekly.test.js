@@ -32,24 +32,16 @@ const SEND_WEEKLY_PATH = req.resolve('../sendWeekly.js');
 
 /**
  * Create a Firestore snapshot mock with an array of user documents.
- * Each user doc has a .data() method and the snapshot has forEach().
+ * Each user doc has a .data() method.
  *
  * @param {Array<Object>} users - Array of user data objects
- * @returns {{ forEach: Function }}
+ * @returns {{ docs: Array<{ data: Function }> }}
  */
 function createQuerySnapshot(users) {
-
-  const docs = users.map((userData) => ({ data: () => userData }));
-
   return {
-    forEach(callback) {
-      users.forEach((userData) => {
-        callback({ data: () => userData });
-      });
-    },
-
-    docs,
-
+    docs: users.map((userData) => ({
+      data: () => userData,
+    })),
   };
 }
 
