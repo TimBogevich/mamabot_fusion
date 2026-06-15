@@ -3,6 +3,19 @@ const {defineSecret} = require("firebase-functions/params");
 const {TELEGRAM_API, getTelegramToken, sendMessage} = require("./src/utils/telegram");
 const { routeCallback } = require('./src/handlers/router');
 const languageDialog = require("./src/handlers/onboarding/languageDialog");
+const { getUser } = require('./src/collections/users');
+
+// ---------------------------------------------------------------------------
+// Graceful degradation — FN-007 (editEdd handler) may not be merged yet
+// ---------------------------------------------------------------------------
+
+/** @type {((chatId: number|string, text: string) => Promise<Object>)|null} */
+let _handleEditEddInput = null;
+try {
+  _handleEditEddInput = require('./src/handlers/onboarding/editEdd').handleEditEddInput;
+} catch (_err) {
+  // FN-007 ещё не смержен — текстовый ввод ПДР будет обработан как echo
+}
 
 const TELEGRAM_TOKEN = defineSecret("TELEGRAM_TOKEN");
 
@@ -52,6 +65,21 @@ exports.webhook = onRequest(
         await languageDialog.askLanguage(chatId);
         res.sendStatus(200);
         return;
+      }
+
+      // 3.5: Route text messages based on onboarding state
+      if (_handleEditEddInput) {
+        try {
+          const user = await getUser(chatId);
+          if (user && user.onboardingState === 'awaiting_edd') {
+            await _handleEditEddInput(chatId, text);
+            res.sendStatus(200);
+            return;
+          }
+        } catch (_err) {
+          // Firestore read failed or handler threw — fall through to echo
+          console.warn('[webhook] onboardingState routing error:', _err.message);
+        }
       }
 
       // 4. Echo fallback for all other text messages

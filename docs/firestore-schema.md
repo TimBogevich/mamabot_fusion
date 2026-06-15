@@ -71,6 +71,8 @@ Telegram `chat.id` is used as the document ID to guarantee natural uniqueness an
 | `language` | `'ru' \| 'en'` | ✅ | `'ru'` | Selected interface language. |
 | `lmpDate` | `string` | ❌ | — | First day of last menstrual period, ISO format (`YYYY-MM-DD`). |
 | `currentWeek` | `number` | ❌ | — | Calculated current pregnancy week (1–42). |
+| `eddDate` | `string` | ❌ | — | Estimated due date, ISO format (`YYYY-MM-DD`). |
+| `onboardingState` | `string` | ❌ | — | Transient onboarding state (`'awaiting_edd'`). Cleared on completion. |
 | `partnerCode` | `string` | ❌ | — | 6-character invitation code for partner linking. |
 | `role` | `'mom' \| 'partner'` | ✅ | `'mom'` | User role: mom or partner. |
 | `createdAt` | `Timestamp` | ✅ | `serverTimestamp()` | Document creation timestamp. |
@@ -107,6 +109,7 @@ No additional composite indexes required for `users` — `chatId` is the documen
 | Load profile on start | Read document | `getUser(chatId)` |
 | Change language | Update `language` | `updateUser(chatId, { language: 'en' })` |
 | Set LMP date | Update `lmpDate`, `currentWeek` | `updateUser(chatId, { lmpDate: '2026-03-01', currentWeek: 14 })` → sends EDD confirmation with Верно/Исправить buttons |
+| Set EDD date | Update `eddDate`, `onboardingState` | `updateUser(chatId, { eddDate: '2026-12-25', onboardingState: null })` |
 | Update role | Update `role` | `updateUser(chatId, { role: 'partner' })` |
 | Create partner code | Update `partnerCode` | `updateUser(chatId, { partnerCode: 'XYZ789' })` |
 

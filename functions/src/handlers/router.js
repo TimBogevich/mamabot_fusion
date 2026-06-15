@@ -39,6 +39,14 @@ try {
   // FN-006 ещё не смержен — onboarding_confirm_edd будет обработан как not-implemented
 }
 
+/** @type {((chatId: number|string) => Promise<Object>)|null} */
+let _handleEditEdd = null;
+try {
+  _handleEditEdd = require('./onboarding/editEdd').handleEditEdd;
+} catch (_err) {
+  // FN-007 ещё не смержен — onboarding_edit_edd будет обработан как not-implemented
+}
+
 // ---------------------------------------------------------------------------
 // Внутренние ссылки на зависимости (мутабельные для тестирования)
 // ---------------------------------------------------------------------------
@@ -133,6 +141,13 @@ async function handleOnboarding(chatId, callbackData, context) {
   if (callbackData === 'onboarding_confirm_edd') {
     if (_handleConfirmEdd) {
       return _handleConfirmEdd(chatId);
+    }
+    return handleNotImplemented(chatId, callbackData);
+  }
+
+  if (callbackData === 'onboarding_edit_edd') {
+    if (_handleEditEdd) {
+      return _handleEditEdd(chatId);
     }
     return handleNotImplemented(chatId, callbackData);
   }
@@ -282,6 +297,7 @@ function __inject(deps) {
   if (deps.showMainMenu !== undefined) _showMainMenu = deps.showMainMenu;
   if (deps.handleLanguageChoice !== undefined) _handleLanguageChoice = deps.handleLanguageChoice;
   if (deps.handleConfirmEdd !== undefined) _handleConfirmEdd = deps.handleConfirmEdd;
+  if (deps.handleEditEdd !== undefined) _handleEditEdd = deps.handleEditEdd;
 }
 
 module.exports = { routeCallback, __inject };
