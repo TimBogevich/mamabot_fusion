@@ -85,7 +85,29 @@
     "next_week": "Week {{week}} ▶️"
   },
   "mood": {
-    "coming_soon": "😊 The «Mood Diary» section is under development. You'll soon be able to track your mood here!"
+    "title": "😊 Mood Diary",
+    "log_mood": "📝 Log Mood",
+    "history": "📊 History",
+    "back_to_menu": "🔙 Main Menu",
+    "select_mood": "😊 How are you feeling today?",
+    "mood_1": "😢 Very bad",
+    "mood_2": "😕 Bad",
+    "mood_3": "😐 Okay",
+    "mood_4": "🙂 Good",
+    "mood_5": "😊 Excellent",
+    "select_energy": "⚡ How is your energy level?",
+    "energy_1": "🔋 Very low",
+    "energy_2": "🪫 Low",
+    "energy_3": "⚡ Medium",
+    "energy_4": "🔋 High",
+    "energy_5": "💪 Very high",
+    "saved": "✅ Mood saved! Mood: {{mood}}/5, Energy: {{energy}}/5.",
+    "save_error": "❌ Failed to save mood. Please try again.",
+    "no_data": "😊 No mood records yet. Start by logging your mood!",
+    "history_title": "📊 Your Mood History (last {{count}} entries)",
+    "history_entry": "📅 {{date}} — Mood: {{mood}}/5, Energy: {{energy}}/5",
+    "stats_title": "📊 Mood Statistics\n\nLast 7 days:\nAvg mood: {{avg_mood_7}}/5\nAvg energy: {{avg_energy_7}}/5\nEntries: {{count_7}}\n\nLast 30 days:\nAvg mood: {{avg_mood_30}}/5\nAvg energy: {{avg_energy_30}}/5\nEntries: {{count_30}}",
+    "stats_not_enough": "📊 Not enough data for statistics. Log your mood for at least a few days."
   },
   "nutrition": {
     "coming_soon": "🍎 The «Nutrition» section is under development. Nutrition recommendations will be available soon!"

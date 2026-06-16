@@ -67,10 +67,10 @@ try {
   // Модуль недели ещё не смержен
 }
 
-/** @type {((chatId: number|string) => Promise<Object>)|null} */
-let _showMoodPlaceholder = null;
+/** @type {((chatId: number|string, callbackData: string) => Promise<Object>)|null} */
+let _handleMoodCallback = null;
 try {
-  _showMoodPlaceholder = require('./mood/moodMenu').showMoodPlaceholder;
+  _handleMoodCallback = require('./mood/moodMenu').handleMoodCallback;
 } catch (_err) {
   // Модуль настроения ещё не смержен
 }
@@ -211,8 +211,8 @@ async function handleMenu(chatId, callbackData) {
     return _handleWeekCallback(chatId, callbackData);
   }
 
-  if (callbackData === 'menu_mood_diary' && _showMoodPlaceholder) {
-    return _showMoodPlaceholder(chatId);
+  if (callbackData === 'menu_mood_diary' && _handleMoodCallback) {
+    return _handleMoodCallback(chatId, callbackData);
   }
 
   if (callbackData === 'menu_nutrition' && _showNutritionPlaceholder) {
@@ -315,6 +315,10 @@ async function routeCallback(chatId, callbackData, context) {
       }
       return handleNotImplemented(chatId, callbackData);
     case 'mood':
+      if (_handleMoodCallback) {
+        return _handleMoodCallback(chatId, callbackData);
+      }
+      return handleNotImplemented(chatId, callbackData);
     case 'nutrition':
       return handleNotImplemented(chatId, callbackData);
     default:
@@ -359,7 +363,7 @@ async function handleUnknownCallback(chatId) {
  * @param {Function|null} [deps.handleSettingsCallback] - Mock handleSettingsCallback (or null to simulate FN-029 missing)
  * @param {Function|null} [deps.showSettingsMenu] - Mock showSettingsMenu (or null to simulate FN-029 missing)
  * @param {Function|null} [deps.handleWeekCallback] - Mock handleWeekCallback
- * @param {Function|null} [deps.showMoodPlaceholder] - Mock showMoodPlaceholder
+ * @param {Function|null} [deps.handleMoodCallback] - Mock handleMoodCallback
  * @param {Function|null} [deps.showNutritionPlaceholder] - Mock showNutritionPlaceholder
  * @returns {void}
  *
@@ -380,7 +384,7 @@ function __inject(deps) {
   if (deps.handleSettingsCallback !== undefined) _handleSettingsCallback = deps.handleSettingsCallback;
   if (deps.showSettingsMenu !== undefined) _showSettingsMenu = deps.showSettingsMenu;
   if (deps.handleWeekCallback !== undefined) _handleWeekCallback = deps.handleWeekCallback;
-  if (deps.showMoodPlaceholder !== undefined) _showMoodPlaceholder = deps.showMoodPlaceholder;
+  if (deps.handleMoodCallback !== undefined) _handleMoodCallback = deps.handleMoodCallback;
   if (deps.showNutritionPlaceholder !== undefined) _showNutritionPlaceholder = deps.showNutritionPlaceholder;
 }
 
