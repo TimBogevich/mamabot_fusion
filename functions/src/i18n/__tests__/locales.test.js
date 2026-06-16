@@ -122,11 +122,15 @@ describe('Localization files', () => {
   it('ru.json should have required top-level categories', () => {
     expect(ru).toHaveProperty('onboarding');
     expect(ru).toHaveProperty('menu');
+    expect(ru).toHaveProperty('settings');
+    expect(ru).toHaveProperty('error');
   });
 
   it('en.json should have required top-level categories', () => {
     expect(en).toHaveProperty('onboarding');
     expect(en).toHaveProperty('menu');
+    expect(en).toHaveProperty('settings');
+    expect(en).toHaveProperty('error');
   });
 
   // -----------------------------------------------------------------------
@@ -174,66 +178,6 @@ describe('Localization files', () => {
   // -----------------------------------------------------------------------
   // Cyrillic check for Russian file
   // -----------------------------------------------------------------------
-
-  // -----------------------------------------------------------------------
-  // New EDD key validation
-  // -----------------------------------------------------------------------
-
-  describe('EDD onboarding keys', () => {
-    const eddKeys = [
-      'ask_edd',
-      'edd_before_lmp',
-      'edd_calculated',
-      'edd_confirm_btn',
-      'edd_edit_btn',
-      'edd_invalid',
-      'edd_saved',
-      'edd_too_far',
-    ];
-    const fullPaths = eddKeys.map((k) => `onboarding.${k}`);
-
-    it('should exist in ru.json and resolve to non-empty strings', () => {
-      for (const path of fullPaths) {
-        const value = resolvePath(ru, path);
-        expect(typeof value).toBe('string');
-        expect(value.length).toBeGreaterThan(0);
-      }
-    });
-
-    it('should exist in en.json and resolve to non-empty strings', () => {
-      for (const path of fullPaths) {
-        const value = resolvePath(en, path);
-        expect(typeof value).toBe('string');
-        expect(value.length).toBeGreaterThan(0);
-      }
-    });
-
-    it('onboarding.edd_calculated should contain {edd} interpolation marker in both locales', () => {
-      expect(resolvePath(ru, 'onboarding.edd_calculated')).toContain('{edd}');
-      expect(resolvePath(en, 'onboarding.edd_calculated')).toContain('{edd}');
-    });
-
-    it('onboarding.edd_saved should contain {edd} interpolation marker in both locales', () => {
-      expect(resolvePath(ru, 'onboarding.edd_saved')).toContain('{edd}');
-      expect(resolvePath(en, 'onboarding.edd_saved')).toContain('{edd}');
-    });
-
-    it('onboarding.edd_before_lmp should contain {lmp} interpolation marker in both locales', () => {
-      expect(resolvePath(ru, 'onboarding.edd_before_lmp')).toContain('{lmp}');
-      expect(resolvePath(en, 'onboarding.edd_before_lmp')).toContain('{lmp}');
-    });
-
-    it('onboarding.edd_confirm_btn should resolve to non-empty string without interpolation markers', () => {
-      const ruVal = resolvePath(ru, 'onboarding.edd_confirm_btn');
-      const enVal = resolvePath(en, 'onboarding.edd_confirm_btn');
-      expect(typeof ruVal).toBe('string');
-      expect(ruVal.length).toBeGreaterThan(0);
-      expect(typeof enVal).toBe('string');
-      expect(enVal.length).toBeGreaterThan(0);
-      expect(ruVal).not.toBe('onboarding.edd_confirm_btn');
-      expect(enVal).not.toBe('onboarding.edd_confirm_btn');
-    });
-  });
 
   it('ru.json values should contain Cyrillic characters', () => {
     const ruPaths = collectLeafPaths(ru);
