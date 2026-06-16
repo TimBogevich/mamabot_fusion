@@ -2,121 +2,118 @@
  * Weekly notification handler.
  *
  * Queries all users with an LMP date, computes their current pregnancy week,
- * and returns counts of checked and notified users. Actual notification logic
- * (duplicate protection, message sending) is added by sibling tasks FN-021
- * and FN-022.
+ * fetches pregnancy development data from Firestore, formats a rich message
+ * in the user's preferred language, and sends it via Telegram.
  *
  * @module sendWeekly
  */
 
-const { db } = require('../../firestore');
+const { FieldValue } = require('firebase-admin/firestore');
+const { db: _dbCore } = require('../../firestore');
 const { calculatePregnancyWeek } = require('../../utils/pregnancyWeek');
-const { updateUser } = require('../../collections/users');
+const { t: _tCore } = require('../../i18n');
+const { sendMessage: _sendMessageCore } = require('../../utils/telegram');
 
 // ---------------------------------------------------------------------------
-// Internal dependency references (mutable for testability via __inject)
+// Mutable dependency references for testability (see __inject)
 // ---------------------------------------------------------------------------
 
-/** @type {typeof calculatePregnancyWeek} */
-let _calculatePregnancyWeek = calculatePregnancyWeek;
-
-/** @type {typeof updateUser} */
-let _updateUser = updateUser;
-
-/* eslint-disable no-unused-vars */
-/** @type {(chatId: number|string, text: string) => Promise<Object>} */
-let _sendMessage = null;
-/* eslint-enable no-unused-vars */
+/** @type {FirebaseFirestore.Firestore} */
+let _db = _dbCore;
+/** @type {typeof _tCore} */
+let _t = _tCore;
+/** @type {typeof _sendMessageCore} */
+let _sendMessage = _sendMessageCore;
 
 /**
- * Checks all users with an LMP date and determines who should receive a
- * weekly notification.
+ * Overrides internal dependencies for testing.
  *
+ * @param {{ db?: Function, t?: Function, sendMessage?: Function }} deps
+ */
+function __inject(deps) {
+  if (deps.db) _db = deps.db;
+  if (deps.t) _t = deps.t;
+  if (deps.sendMessage) _sendMessage = deps.sendMessage;
+}
 
- * For each user, checks:
- * - outOfRange is false (pregnancy week is 1–42)
- * - current week > lastNotifiedWeek (duplicate protection)
+/**
+ * Sends weekly pregnancy notifications to all eligible users.
  *
- * After sending a notification, updates lastNotifiedWeek in Firestore so
- * the same user is not re-notified at the same week on subsequent runs.
+ * For each user with a valid LMP date, computes the current pregnancy week,
+ * checks if a notification has already been sent for that week, fetches
+ * pregnancy development data, formats a locale-aware message, and sends it
+ * via Telegram. Errors for individual users are logged and do not crash
+ * the entire batch.
  *
- * @returns {Promise<{ checked: number, notified: number, skipped: number, errors: number }>}
- *   `checked` — number of users with an lmpDate
- *   `notified` — number of users actually notified
- *   `skipped` — number of users skipped (duplicate week or outOfRange)
- *   `errors` — number of users where a Firestore update failed
+ * @returns {Promise<{ checked: number, notified: number }>}
+ *   `checked` — number of users with an LMP date
+ *   `notified` — number of users who received a notification
  */
 async function sendWeeklyNotifications() {
-  const snap = await db.collection('users').where('lmpDate', '!=', null).get();
+  const snap = await _db.collection('users').where('lmpDate', '!=', null).get();
 
   let checked = 0;
   let notified = 0;
-  let skipped = 0;
-  let errors = 0;
 
   for (const doc of snap.docs) {
     const user = doc.data();
     checked++;
 
-    const { week, outOfRange } = _calculatePregnancyWeek(user.lmpDate);
+    const { week, outOfRange } = calculatePregnancyWeek(user.lmpDate);
 
     // Skip users whose pregnancy is out of range (before week 1 or after week 42)
     if (outOfRange) {
-      skipped++;
       continue;
     }
 
-    // Duplicate-protection gate: skip if the week has not advanced
+    // Duplicate protection: skip if already notified for this week
     if (week <= (user.lastNotifiedWeek || 0)) {
-      console.log(`[sendWeeklyNotifications] user ${user.chatId}: week ${week} → skipped (lastNotifiedWeek=${user.lastNotifiedWeek})`);
-      skipped++;
       continue;
     }
 
-    // -------------------------------------------------------------------
-    // TODO (FN-022): Fetch pregnancy data, format message, call sendMessage
-    // -------------------------------------------------------------------
-
-    // Update lastNotifiedWeek in Firestore after successful notification
+    // Message formation and sending
     try {
-      await _updateUser(user.chatId, { lastNotifiedWeek: week });
-    } catch (err) {
-      console.error(`[sendWeeklyNotifications] user ${user.chatId}: failed to update lastNotifiedWeek — ${err.message}`);
-      errors++;
-      continue;
-    }
+      // Determine user language (default to 'ru' if missing)
+      const lang = (user.language === 'en') ? 'en' : 'ru';
 
-    notified++;
+      // Fetch pregnancy data from Firestore
+      const pregnancyDocId = `${week}_${lang}`;
+      const pregnancySnap = await _db.collection('pregnancy_data').doc(pregnancyDocId).get();
+
+      if (!pregnancySnap.exists) {
+        console.warn(`[sendWeeklyNotifications] No pregnancy data for ${pregnancyDocId}, user ${user.chatId}`);
+        continue;
+      }
+
+      const pregnancyData = pregnancySnap.data();
+
+      const message = await _t(user.chatId, 'notifications.new_week_full', {
+        week: String(week),
+        weight: String(pregnancyData.babyWeightGrams),
+        size: pregnancyData.babySize,
+        development: pregnancyData.babyDevelopment,
+      });
+
+      await _sendMessage(user.chatId, message);
+      console.log(`[sendWeeklyNotifications] Sent week ${week} notification to user ${user.chatId} (${lang})`);
+
+      // Update lastNotifiedWeek after successful send
+      await _db.collection('users').doc(String(user.chatId)).update({
+        lastNotifiedWeek: week,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      notified++;
+    } catch (err) {
+      console.error(`[sendWeeklyNotifications] Failed to notify user ${user.chatId}:`, err.message);
+      // Continue to next user — failure for one should not crash the batch
+    }
   }
 
-  console.log(`[sendWeeklyNotifications] Checked ${checked} users, notified ${notified}, skipped ${skipped}, errors ${errors}`);
+  console.log(`[sendWeeklyNotifications] Checked ${checked} users with lmpDate`);
+  console.log(`[sendWeeklyNotifications] Notified ${notified} users`);
 
-  return { checked, notified, skipped, errors };
+  return { checked, notified };
 }
 
-/**
- * Injects mock dependencies for testing.
- *
- * Allows overriding internal references to calculatePregnancyWeek,
- * updateUser, and sendMessage without module-level mocking.
- *
- * @param {{ calculatePregnancyWeek?: Function, updateUser?: Function, sendMessage?: Function }} deps
- * @returns {void}
- *
- * @example
- *   const { sendWeeklyNotifications, __inject } = require('./sendWeekly');
- *   __inject({ calculatePregnancyWeek: mockCalc, updateUser: mockUpdateUser });
- *
- * @private
- */
-function __inject(deps) {
-  if (deps.calculatePregnancyWeek) _calculatePregnancyWeek = deps.calculatePregnancyWeek;
-  if (deps.updateUser) _updateUser = deps.updateUser;
-  if (deps.sendMessage) _sendMessage = deps.sendMessage;
-}
-
-module.exports = {
-  sendWeeklyNotifications,
-  __inject,
-};
-
+module.exports = { sendWeeklyNotifications, __inject };

@@ -73,7 +73,9 @@ The Functions source directory is `functions/` as declared in [`firebase.json`](
 | Function | Type | Trigger | Description |
 |----------|------|---------|-------------|
 | `webhook` | HTTPS | HTTP request | Handles incoming Telegram updates (messages, callbacks) |
-| `sendWeeklyNotifications` | Scheduled | `every day 09:00` Europe/Moscow | Queries users with LMP date, computes pregnancy week, prepares weekly notifications |
+| `sendWeeklyNotifications` | Scheduled | `every day 09:00` Europe/Moscow | Queries users with LMP date, computes pregnancy week, fetches pregnancy development data from `pregnancy_data` collection and sends locale-aware notification via Telegram |
+
+> **Note:** The `sendWeeklyNotifications` function depends on the `pregnancy_data` Firestore collection being seeded with weekly pregnancy development data. Seed the collection by running `pnpm seed:pregnancy-data` from the repo root. The function also requires locale keys `notifications.new_week_full` in both `functions/src/locales/ru.json` and `functions/src/locales/en.json`.
 
 ---
 
