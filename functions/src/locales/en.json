@@ -109,7 +109,5 @@
     "stats_title": "📊 Mood Statistics\n\nLast 7 days:\nAvg mood: {{avg_mood_7}}/5\nAvg energy: {{avg_energy_7}}/5\nEntries: {{count_7}}\n\nLast 30 days:\nAvg mood: {{avg_mood_30}}/5\nAvg energy: {{avg_energy_30}}/5\nEntries: {{count_30}}",
     "stats_not_enough": "📊 Not enough data for statistics. Log your mood for at least a few days."
   },
-  "nutrition": {
-    "coming_soon": "🍎 The «Nutrition» section is under development. Nutrition recommendations will be available soon!"
-  }
+  "nutrition": { "title": "🍎 Nutrition", "log_meal": "🍽️ Log Meal", "history": "📊 History", "back_to_menu": "🔙 Main Menu", "select_meal_type": "🍽️ What meal type?", "breakfast": "🌅 Breakfast", "lunch": "☀️ Lunch", "dinner": "🌙 Dinner", "snack": "🍪 Snack", "ask_foods": "🥗 What did you eat? Write foods separated by commas.", "ask_water": "💧 How many glasses of water? (0-20)", "ask_vitamins": "💊 Vitamins taken? (optional, or click Skip)", "skip_vitamins": "⏭️ Skip", "saved": "✅ Meal saved! {{mealType}}: {{foods}}. Water: {{water}} glasses.", "save_error": "❌ Failed to save meal. Please try again.", "no_data": "🍎 No meal records yet. Log your meals to see them here!", "history_title": "📊 Nutrition History (last {{count}} entries)", "history_entry": "📅 {{date}} | {{mealType}} | {{foods}} | Water: {{water}}gl", "invalid_foods": "❌ Please enter at least one food item, separated by commas.", "invalid_water": "❌ Please enter a number from 0 to 20." }
 }

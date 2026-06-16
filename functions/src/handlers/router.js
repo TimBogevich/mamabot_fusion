@@ -75,10 +75,10 @@ try {
   // Модуль настроения ещё не смержен
 }
 
-/** @type {((chatId: number|string) => Promise<Object>)|null} */
-let _showNutritionPlaceholder = null;
+/** @type {((chatId: number|string, callbackData: string) => Promise<Object>)|null} */
+let _handleNutritionCallback = null;
 try {
-  _showNutritionPlaceholder = require('./nutrition/nutritionMenu').showNutritionPlaceholder;
+  _handleNutritionCallback = require('./nutrition/nutritionMenu').handleNutritionCallback;
 } catch (_err) {
   // Модуль питания ещё не смержен
 }
@@ -215,8 +215,8 @@ async function handleMenu(chatId, callbackData) {
     return _handleMoodCallback(chatId, callbackData);
   }
 
-  if (callbackData === 'menu_nutrition' && _showNutritionPlaceholder) {
-    return _showNutritionPlaceholder(chatId);
+  if (callbackData === 'menu_nutrition' && _handleNutritionCallback) {
+    return _handleNutritionCallback(chatId, callbackData);
   }
 
   return handleNotImplemented(chatId, callbackData);
@@ -320,6 +320,9 @@ async function routeCallback(chatId, callbackData, context) {
       }
       return handleNotImplemented(chatId, callbackData);
     case 'nutrition':
+      if (_handleNutritionCallback) {
+        return _handleNutritionCallback(chatId, callbackData);
+      }
       return handleNotImplemented(chatId, callbackData);
     default:
       return handleUnknownCallback(chatId);
@@ -364,7 +367,7 @@ async function handleUnknownCallback(chatId) {
  * @param {Function|null} [deps.showSettingsMenu] - Mock showSettingsMenu (or null to simulate FN-029 missing)
  * @param {Function|null} [deps.handleWeekCallback] - Mock handleWeekCallback
  * @param {Function|null} [deps.handleMoodCallback] - Mock handleMoodCallback
- * @param {Function|null} [deps.showNutritionPlaceholder] - Mock showNutritionPlaceholder
+ * @param {Function|null} [deps.handleNutritionCallback] - Mock handleNutritionCallback
  * @returns {void}
  *
  * @example
@@ -385,7 +388,7 @@ function __inject(deps) {
   if (deps.showSettingsMenu !== undefined) _showSettingsMenu = deps.showSettingsMenu;
   if (deps.handleWeekCallback !== undefined) _handleWeekCallback = deps.handleWeekCallback;
   if (deps.handleMoodCallback !== undefined) _handleMoodCallback = deps.handleMoodCallback;
-  if (deps.showNutritionPlaceholder !== undefined) _showNutritionPlaceholder = deps.showNutritionPlaceholder;
+  if (deps.handleNutritionCallback !== undefined) _handleNutritionCallback = deps.handleNutritionCallback;
 }
 
 module.exports = { routeCallback, __inject };

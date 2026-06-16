@@ -34,6 +34,14 @@ try {
   // showSettingsMenu not available — /settings command will fall back to echo
 }
 
+/** @type {((chatId: number|string, text: string) => Promise<Object>)|null} */
+let _handleNutritionInput = null;
+try {
+  _handleNutritionInput = require('./src/handlers/nutrition/nutritionMenu').handleNutritionInput;
+} catch (_err) {
+  // nutrition handler not available
+}
+
 const { t } = require('./src/i18n');
 
 const TELEGRAM_TOKEN = defineSecret('TELEGRAM_TOKEN');
@@ -110,6 +118,20 @@ exports.webhook = onRequest(
         } catch (_err) {
           // Firestore read failed or handler threw — fall through to echo
           console.warn('[webhook] onboardingState routing error:', _err.message);
+        }
+      }
+
+      // 3.6: Route text messages based on nutrition state
+      if (_handleNutritionInput) {
+        try {
+          const user = await getUser(chatId);
+          if (user && user.nutritionState && user.nutritionState.startsWith('awaiting_foods_')) {
+            await _handleNutritionInput(chatId, text);
+            res.sendStatus(200);
+            return;
+          }
+        } catch (_err) {
+          console.warn('[webhook] nutritionState routing error:', _err.message);
         }
       }
 

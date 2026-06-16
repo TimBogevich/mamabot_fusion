@@ -29,7 +29,7 @@ const mockHandleConfirmEdd = vi.fn();
 const mockHandleEditEdd = vi.fn();
 const mockHandleWeekCallback = vi.fn();
 const mockHandleMoodCallback = vi.fn();
-const mockShowNutritionPlaceholder = vi.fn();
+const mockHandleNutritionCallback = vi.fn();
 
 // ---------------------------------------------------------------------------
 // Module under test вЂ” loads real modules but we inject mocks via __inject()
@@ -56,7 +56,7 @@ __inject({
     showSettingsMenu: null,
     handleWeekCallback: null,
     handleMoodCallback: null,
-    showNutritionPlaceholder: null,
+    handleNutritionCallback: null,
   });
 
 // ---------------------------------------------------------------------------
@@ -93,7 +93,7 @@ function restoreInjectDefaults() {
     showSettingsMenu: null,
     handleWeekCallback: null,
     handleMoodCallback: null,
-    showNutritionPlaceholder: null,
+    handleNutritionCallback: null,
   });
 }
 
@@ -107,7 +107,7 @@ function setupDefaults() {
   mockSendMessage.mockResolvedValue({ ok: true });
   mockHandleWeekCallback.mockResolvedValue({ status: 'week_shown', week: 10 });
   mockHandleMoodCallback.mockResolvedValue({ status: 'mood_placeholder' });
-  mockShowNutritionPlaceholder.mockResolvedValue({ status: 'nutrition_placeholder' });
+  mockHandleNutritionCallback.mockResolvedValue({ status: 'nutrition_placeholder' });
 }
 
 // ---------------------------------------------------------------------------
@@ -291,7 +291,7 @@ describe('routeCallback вЂ” РјР°СЂС€СЂСѓС‚РёР·Р°С†�
     __inject({
       handleWeekCallback: mockHandleWeekCallback,
       handleMoodCallback: mockHandleMoodCallback,
-      showNutritionPlaceholder: mockShowNutritionPlaceholder,
+      handleNutritionCallback: mockHandleNutritionCallback,
     });
   });
 
@@ -316,12 +316,14 @@ describe('routeCallback вЂ” РјР°СЂС€СЂСѓС‚РёР·Р°С†�
     expect(result).toEqual({ status: 'mood_menu_shown' });
   });
 
-  it('menu_nutrition в†’ РІС‹Р·С‹РІР°РµС‚ showNutritionPlaceholder', async () => {
+  it('menu_nutrition в†’ РІС‹Р·С‹РІР°РµС‚ handleNutritionCallback', async () => {
+    mockHandleNutritionCallback.mockResolvedValue({ status: 'nutrition_menu_shown' });
+
     const result = await routeCallback(CHAT_ID, 'menu_nutrition', DEFAULT_CONTEXT);
 
-    expect(mockShowNutritionPlaceholder).toHaveBeenCalledTimes(1);
-    expect(mockShowNutritionPlaceholder).toHaveBeenCalledWith(CHAT_ID);
-    expect(result).toEqual({ status: 'nutrition_placeholder' });
+    expect(mockHandleNutritionCallback).toHaveBeenCalledTimes(1);
+    expect(mockHandleNutritionCallback).toHaveBeenCalledWith(CHAT_ID, 'menu_nutrition');
+    expect(result).toEqual({ status: 'nutrition_menu_shown' });
   });
 });
 
