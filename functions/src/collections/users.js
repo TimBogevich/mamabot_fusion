@@ -14,14 +14,14 @@
  *   await updateUser(chatId, { language: 'en' });
  */
 
-const { FieldValue } = require("firebase-admin/firestore");
-const { db } = require("../firestore");
+const { FieldValue } = require('firebase-admin/firestore');
+const { db } = require('../firestore');
 
 // ---------------------------------------------------------------------------
 // Collection reference
 // ---------------------------------------------------------------------------
 
-const USERS_COLLECTION = "users";
+const USERS_COLLECTION = 'users';
 
 /**
  * Returns a DocumentReference for the given Telegram chat ID.

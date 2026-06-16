@@ -481,7 +481,7 @@ describe('partners collection', () => {
 
   // ── Write ──────────────────────────────────────────────────────────────
 
-  it("Mom CANNOT write to her own partnership partners/ABC123", async () => {
+  it('Mom CANNOT write to her own partnership partners/ABC123', async () => {
     await seed('partners', 'ABC123', {
       partnerCode: 'ABC123', momChatId: '111', partnerChatId: '222',
       status: 'active', createdAt: null, updatedAt: null,
@@ -493,7 +493,7 @@ describe('partners collection', () => {
     );
   });
 
-  it("Partner CANNOT write to linked partnership partners/ABC123", async () => {
+  it('Partner CANNOT write to linked partnership partners/ABC123', async () => {
     await seed('partners', 'ABC123', {
       partnerCode: 'ABC123', momChatId: '111', partnerChatId: '222',
       status: 'active', createdAt: null, updatedAt: null,

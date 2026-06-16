@@ -6,12 +6,12 @@
  * All Telegram API calls are mocked — no actual HTTP requests are made.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { createRequire } from "node:module";
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { createRequire } from 'node:module';
 
-const TEST_TOKEN = "test:resolved-token-12345";
-const TELEGRAM_API_URL = "https://api.telegram.org";
-const TEST_HOST = "us-central1-mamabot-97d22.cloudfunctions.net";
+const TEST_TOKEN = 'test:resolved-token-12345';
+const TELEGRAM_API_URL = 'https://api.telegram.org';
+const TEST_HOST = 'us-central1-mamabot-97d22.cloudfunctions.net';
 const EXPECTED_WEBHOOK_URL = `https://${TEST_HOST}/webhook`;
 
 const req = createRequire(import.meta.url);
@@ -23,7 +23,7 @@ let originalFetch;
  * before index.js is loaded. This follows the same pattern as index.test.js.
  */
 function injectFirebaseMock(configValue) {
-  const fbPath = req.resolve("firebase-functions");
+  const fbPath = req.resolve('firebase-functions');
   req.cache[fbPath] = {
     id: fbPath,
     filename: fbPath,
@@ -33,7 +33,7 @@ function injectFirebaseMock(configValue) {
     },
   };
 
-  const fbV2HttpsPath = req.resolve("firebase-functions/v2/https");
+  const fbV2HttpsPath = req.resolve('firebase-functions/v2/https');
   req.cache[fbV2HttpsPath] = {
     id: fbV2HttpsPath,
     filename: fbV2HttpsPath,
@@ -49,19 +49,19 @@ function cleanCache() {
   delete process.env.TELEGRAM_TOKEN;
 
   try {
-    const indexPath = req.resolve("../../index.js");
+    const indexPath = req.resolve('../../index.js');
     delete req.cache[indexPath];
   } catch { /* not cached yet */ }
   try {
-    const tgPath = req.resolve("../utils/telegram.js");
+    const tgPath = req.resolve('../utils/telegram.js');
     delete req.cache[tgPath];
   } catch { /* not cached yet */ }
   try {
-    const fbPath = req.resolve("firebase-functions");
+    const fbPath = req.resolve('firebase-functions');
     delete req.cache[fbPath];
   } catch { /* not cached yet */ }
   try {
-    const fbV2Path = req.resolve("firebase-functions/v2/https");
+    const fbV2Path = req.resolve('firebase-functions/v2/https');
     delete req.cache[fbV2Path];
   } catch { /* not cached yet */ }
 
@@ -70,11 +70,11 @@ function cleanCache() {
 
 function unmockFirebase() {
   try {
-    const fbPath = req.resolve("firebase-functions");
+    const fbPath = req.resolve('firebase-functions');
     delete req.cache[fbPath];
   } catch { /* not cached yet */ }
   try {
-    const fbV2Path = req.resolve("firebase-functions/v2/https");
+    const fbV2Path = req.resolve('firebase-functions/v2/https');
     delete req.cache[fbV2Path];
   } catch { /* not cached yet */ }
 }
@@ -82,7 +82,7 @@ function unmockFirebase() {
 /** Create a mock request object with a given host header. */
 function mockReq(host = TEST_HOST) {
   return {
-    method: "GET",
+    method: 'GET',
     headers: { host },
   };
 }
@@ -104,10 +104,10 @@ function mockRes() {
  * pre-mocked in the require cache.
  */
 function loadRegisterWebhook() {
-  return req("../../index.js").registerWebhook;
+  return req('../../index.js').registerWebhook;
 }
 
-describe("registerWebhook", () => {
+describe('registerWebhook', () => {
   beforeEach(() => {
     cleanCache();
     injectFirebaseMock({});
@@ -121,10 +121,10 @@ describe("registerWebhook", () => {
     unmockFirebase();
   });
 
-  it("returns success=true when Telegram API confirms webhook was set", async () => {
+  it('returns success=true when Telegram API confirms webhook was set', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ ok: true, description: "Webhook was set" }),
+      json: async () => ({ ok: true, description: 'Webhook was set' }),
     });
 
     const registerWebhook = loadRegisterWebhook();
@@ -136,16 +136,16 @@ describe("registerWebhook", () => {
     expect(res.json).toHaveBeenCalledTimes(1);
     expect(res.json).toHaveBeenCalledWith({
       success: true,
-      description: "Webhook was set",
+      description: 'Webhook was set',
       webhookUrl: EXPECTED_WEBHOOK_URL,
     });
   });
 
-  it("constructs the correct Telegram API URL with the config-resolved token", async () => {
+  it('constructs the correct Telegram API URL with the config-resolved token', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ ok: true, description: "Webhook was set" }),
+        json: async () => ({ ok: true, description: 'Webhook was set' }),
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -161,19 +161,19 @@ describe("registerWebhook", () => {
 
     const setWebhookUrl = fetchMock.mock.calls[0][0];
     expect(setWebhookUrl).toBe(
-      `${TELEGRAM_API_URL}/bot${TEST_TOKEN}/setWebhook?url=${encodeURIComponent(EXPECTED_WEBHOOK_URL)}`
+      `${TELEGRAM_API_URL}/bot${TEST_TOKEN}/setWebhook?url=${encodeURIComponent(EXPECTED_WEBHOOK_URL)}`,
     );
     // Confirm the token is NOT a hardcoded value
-    expect(setWebhookUrl).not.toContain("8780361867");
+    expect(setWebhookUrl).not.toContain('8780361867');
   });
 
-  it("derives webhook URL from the request host header", async () => {
-    const customHost = "custom-host.example.com";
+  it('derives webhook URL from the request host header', async () => {
+    const customHost = 'custom-host.example.com';
     const expectedUrl = `https://${customHost}/webhook`;
 
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ ok: true, description: "Webhook was set" }),
+      json: async () => ({ ok: true, description: 'Webhook was set' }),
     });
 
     const registerWebhook = loadRegisterWebhook();
@@ -184,15 +184,15 @@ describe("registerWebhook", () => {
 
     expect(res.json).toHaveBeenCalledWith({
       success: true,
-      description: "Webhook was set",
+      description: 'Webhook was set',
       webhookUrl: expectedUrl,
     });
   });
 
-  it("returns success=false when Telegram API reports an error", async () => {
+  it('returns success=false when Telegram API reports an error', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
-      json: async () => ({ ok: false, description: "Bad Request: invalid token" }),
+      json: async () => ({ ok: false, description: 'Bad Request: invalid token' }),
     });
 
     const registerWebhook = loadRegisterWebhook();
@@ -204,13 +204,13 @@ describe("registerWebhook", () => {
     expect(res.json).toHaveBeenCalledTimes(1);
     expect(res.json).toHaveBeenCalledWith({
       success: false,
-      description: "Bad Request: invalid token",
+      description: 'Bad Request: invalid token',
       webhookUrl: EXPECTED_WEBHOOK_URL,
     });
   });
 
-  it("returns 500 when fetch network error occurs", async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network failure"));
+  it('returns 500 when fetch network error occurs', async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network failure'));
 
     const registerWebhook = loadRegisterWebhook();
     const req = mockReq(TEST_HOST);
@@ -219,16 +219,16 @@ describe("registerWebhook", () => {
     await registerWebhook(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: "Network failure" });
+    expect(res.json).toHaveBeenCalledWith({ error: 'Network failure' });
   });
 
-  it("properly encodes special characters in the webhook URL", async () => {
-    const specialHost = "project with spaces.cloudfunctions.net";
+  it('properly encodes special characters in the webhook URL', async () => {
+    const specialHost = 'project with spaces.cloudfunctions.net';
     const expectedWebhookUrl = `https://${specialHost}/webhook`;
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ ok: true, description: "Webhook was set" }),
+      json: async () => ({ ok: true, description: 'Webhook was set' }),
     });
     globalThis.fetch = fetchMock;
 
@@ -240,23 +240,23 @@ describe("registerWebhook", () => {
 
     expect(res.json).toHaveBeenCalledWith({
       success: true,
-      description: "Webhook was set",
+      description: 'Webhook was set',
       webhookUrl: expectedWebhookUrl,
     });
 
     // Verify the URL in the fetch call is properly percent-encoded
     const calledUrl = fetchMock.mock.calls[0][0];
     expect(calledUrl).toContain(encodeURIComponent(expectedWebhookUrl));
-    expect(calledUrl).not.toContain(" "); // no raw spaces
+    expect(calledUrl).not.toContain(' '); // no raw spaces
   });
 
-  it("invokes registerWebhook when the cloud function handler receives GET", async () => {
+  it('invokes registerWebhook when the cloud function handler receives GET', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ ok: true, description: "Webhook was set" }),
+      json: async () => ({ ok: true, description: 'Webhook was set' }),
     });
 
-    const mod = req("../../index.js");
+    const mod = req('../../index.js');
     const reqObj = mockReq(TEST_HOST);
     const res = mockRes();
 
@@ -265,17 +265,17 @@ describe("registerWebhook", () => {
 
     expect(res.json).toHaveBeenCalledWith({
       success: true,
-      description: "Webhook was set",
+      description: 'Webhook was set',
       webhookUrl: EXPECTED_WEBHOOK_URL,
     });
   });
 
-  it("calls setMyCommands after successful setWebhook", async () => {
+  it('calls setMyCommands after successful setWebhook', async () => {
     const fetchMock = vi.fn();
     // First call: setWebhook
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ ok: true, description: "Webhook was set" }),
+      json: async () => ({ ok: true, description: 'Webhook was set' }),
     });
     // Second call: setMyCommands
     fetchMock.mockResolvedValueOnce({
@@ -303,11 +303,11 @@ describe("registerWebhook", () => {
     expect(cmdBody.commands[0]).toEqual({ command: 'start', description: '🚀 Start the bot / Начать' });
   });
 
-  it("does not call setMyCommands when setWebhook fails", async () => {
+  it('does not call setMyCommands when setWebhook fails', async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ ok: false, description: "Bad Request" }),
+      json: async () => ({ ok: false, description: 'Bad Request' }),
     });
     globalThis.fetch = fetchMock;
 
@@ -321,15 +321,15 @@ describe("registerWebhook", () => {
     expect(fetchMock.mock.calls[0][0]).toContain('/setWebhook');
   });
 
-  it("returns success even when setMyCommands fails (non-blocking)", async () => {
+  it('returns success even when setMyCommands fails (non-blocking)', async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ ok: true, description: "Webhook was set" }),
+      json: async () => ({ ok: true, description: 'Webhook was set' }),
     });
     // setMyCommands fails
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    fetchMock.mockRejectedValueOnce(new Error("setMyCommands failed"));
+    fetchMock.mockRejectedValueOnce(new Error('setMyCommands failed'));
     globalThis.fetch = fetchMock;
 
     const registerWebhook = loadRegisterWebhook();
@@ -340,7 +340,7 @@ describe("registerWebhook", () => {
 
     expect(res.json).toHaveBeenCalledWith({
       success: true,
-      description: "Webhook was set",
+      description: 'Webhook was set',
       webhookUrl: EXPECTED_WEBHOOK_URL,
     });
     expect(consoleWarnSpy).toHaveBeenCalledWith(

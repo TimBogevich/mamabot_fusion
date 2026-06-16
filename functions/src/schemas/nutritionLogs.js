@@ -14,13 +14,13 @@
  *   Requires composite index on (userId ASC, date DESC)
  */
 
-const { FieldValue } = require("firebase-admin/firestore");
+const { FieldValue } = require('firebase-admin/firestore');
 
 // ---------------------------------------------------------------------------
 // Valid meal types
 // ---------------------------------------------------------------------------
 
-const VALID_MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"];
+const VALID_MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 // ---------------------------------------------------------------------------
 // Field metadata
@@ -29,55 +29,55 @@ const VALID_MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"];
 /** @type {Object<string, {type: string, required: boolean, description: string, validate?: Function}>} */
 const NUTRITION_LOG_FIELDS = {
   userId: {
-    type: "string",
+    type: 'string',
     required: true,
-    description: "Telegram user ID (stringified)",
-    validate: (v) => typeof v === "string" && v.length > 0,
+    description: 'Telegram user ID (stringified)',
+    validate: (v) => typeof v === 'string' && v.length > 0,
   },
   date: {
-    type: "string",
+    type: 'string',
     required: true,
-    description: "Date in ISO 8601 format (YYYY-MM-DD)",
+    description: 'Date in ISO 8601 format (YYYY-MM-DD)',
     validate: (v) =>
-      typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v),
+      typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v),
   },
   mealType: {
-    type: "string",
+    type: 'string',
     required: true,
     description: "Type of meal: 'breakfast', 'lunch', 'dinner', or 'snack'",
     validate: (v) =>
-      typeof v === "string" && VALID_MEAL_TYPES.includes(v),
+      typeof v === 'string' && VALID_MEAL_TYPES.includes(v),
   },
   foods: {
-    type: "array",
+    type: 'array',
     required: true,
-    description: "List of food items consumed (at least 1 entry)",
+    description: 'List of food items consumed (at least 1 entry)',
     validate: (v) =>
       Array.isArray(v) &&
       v.length >= 1 &&
-      v.every((item) => typeof item === "string" && item.length > 0),
+      v.every((item) => typeof item === 'string' && item.length > 0),
   },
   vitamins: {
-    type: "array",
+    type: 'array',
     required: false,
-    description: "List of vitamins taken",
+    description: 'List of vitamins taken',
     validate: (v) =>
       Array.isArray(v) &&
-      v.every((item) => typeof item === "string"),
+      v.every((item) => typeof item === 'string'),
   },
   waterGlasses: {
-    type: "number",
+    type: 'number',
     required: true,
-    description: "Number of glasses of water consumed (≥0)",
+    description: 'Number of glasses of water consumed (≥0)',
     validate: (v) =>
-      typeof v === "number" && Number.isInteger(v) && v >= 0,
+      typeof v === 'number' && Number.isInteger(v) && v >= 0,
   },
   createdAt: {
-    type: "Timestamp",
+    type: 'Timestamp',
     required: true,
     nullable: true,
     description:
-      "Time of document creation (Firestore serverTimestamp; null before write)",
+      'Time of document creation (Firestore serverTimestamp; null before write)',
   },
 };
 
@@ -85,7 +85,7 @@ const NUTRITION_LOG_FIELDS = {
 // Collection name
 // ---------------------------------------------------------------------------
 
-const NUTRITION_LOGS_COLLECTION = "nutrition_logs";
+const NUTRITION_LOGS_COLLECTION = 'nutrition_logs';
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -102,8 +102,8 @@ const NUTRITION_LOGS_COLLECTION = "nutrition_logs";
 function validateNutritionLog(doc) {
   const errors = [];
 
-  if (!doc || typeof doc !== "object") {
-    return { valid: false, errors: ["Document must be a non-null object"] };
+  if (!doc || typeof doc !== 'object') {
+    return { valid: false, errors: ['Document must be a non-null object'] };
   }
 
   for (const [fieldName, meta] of Object.entries(NUTRITION_LOG_FIELDS)) {
@@ -170,7 +170,7 @@ function createNutritionLog({ userId, date, mealType, foods, vitamins, waterGlas
 
   const { valid, errors } = validateNutritionLog(doc);
   if (!valid) {
-    throw new Error(`Nutrition log validation failed: ${errors.join("; ")}`);
+    throw new Error(`Nutrition log validation failed: ${errors.join('; ')}`);
   }
 
   return doc;
@@ -196,10 +196,10 @@ function createNutritionLog({ userId, date, mealType, foods, vitamins, waterGlas
 async function getNutritionLogsByUserAndDate(db, userId, startDate, endDate) {
   const snapshot = await db
     .collection(NUTRITION_LOGS_COLLECTION)
-    .where("userId", "==", userId)
-    .where("date", ">=", startDate)
-    .where("date", "<=", endDate)
-    .orderBy("date", "desc")
+    .where('userId', '==', userId)
+    .where('date', '>=', startDate)
+    .where('date', '<=', endDate)
+    .orderBy('date', 'desc')
     .get();
 
   const docs = [];

@@ -11,7 +11,7 @@
  * Collection: pregnancy_data
  */
 
-const { Timestamp } = require("firebase-admin/firestore");
+const { Timestamp } = require('firebase-admin/firestore');
 
 // ---------------------------------------------------------------------------
 // Field metadata
@@ -20,66 +20,66 @@ const { Timestamp } = require("firebase-admin/firestore");
 /** @type {Object<string, {type: string, required: boolean, description: string, validate?: Function}>} */
 const PREGNANCY_DATA_FIELDS = {
   weekNumber: {
-    type: "number",
+    type: 'number',
     required: true,
-    description: "Неделя беременности (1–40)",
+    description: 'Неделя беременности (1–40)',
     validate: (v) =>
-      typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 40,
+      typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 40,
   },
   language: {
-    type: "string",
+    type: 'string',
     required: true,
     description: "Язык контента: 'ru' или 'en'",
-    validate: (v) => typeof v === "string" && (v === "ru" || v === "en"),
+    validate: (v) => typeof v === 'string' && (v === 'ru' || v === 'en'),
   },
   babyDevelopment: {
-    type: "string",
+    type: 'string',
     required: true,
-    description: "Развитие ребёнка на этой неделе",
+    description: 'Развитие ребёнка на этой неделе',
   },
   motherChanges: {
-    type: "string",
+    type: 'string',
     required: true,
-    description: "Изменения в организме матери",
+    description: 'Изменения в организме матери',
   },
   nutritionTips: {
-    type: "string",
+    type: 'string',
     required: true,
-    description: "Советы по питанию",
+    description: 'Советы по питанию',
   },
   vitaminRecommendations: {
-    type: "string",
+    type: 'string',
     required: true,
-    description: "Рекомендации по витаминам",
+    description: 'Рекомендации по витаминам',
   },
   symptomsCommon: {
-    type: "string",
+    type: 'string',
     required: true,
-    description: "Типичные симптомы",
+    description: 'Типичные симптомы',
   },
   babySize: {
-    type: "string",
+    type: 'string',
     required: true,
-    description: "Размер ребёнка (сравнение)",
+    description: 'Размер ребёнка (сравнение)',
   },
   babyWeightGrams: {
-    type: "number",
+    type: 'number',
     required: true,
-    description: "Вес ребёнка в граммах на этой неделе",
+    description: 'Вес ребёнка в граммах на этой неделе',
     validate: (v) =>
-      typeof v === "number" && Number.isInteger(v) && v > 0 && v <= 5000,
+      typeof v === 'number' && Number.isInteger(v) && v > 0 && v <= 5000,
   },
   createdAt: {
-    type: "Timestamp",
+    type: 'Timestamp',
     required: true,
     nullable: true,
-    description: "Время создания документа (server timestamp; null = Firestore serverTimestamp)",
+    description: 'Время создания документа (server timestamp; null = Firestore serverTimestamp)',
   },
   updatedAt: {
-    type: "Timestamp",
+    type: 'Timestamp',
     required: true,
     nullable: true,
-    description: "Время последнего обновления (server timestamp; null = Firestore serverTimestamp)",
+    description: 'Время последнего обновления (server timestamp; null = Firestore serverTimestamp)',
   },
 };
 
@@ -87,7 +87,7 @@ const PREGNANCY_DATA_FIELDS = {
 // Collection name
 // ---------------------------------------------------------------------------
 
-const PREGNANCY_DATA_COLLECTION = "pregnancy_data";
+const PREGNANCY_DATA_COLLECTION = 'pregnancy_data';
 
 // ---------------------------------------------------------------------------
 // Composite ID helper
@@ -119,8 +119,8 @@ function pregnancyDataDocId(weekNumber, language) {
 function validatePregnancyData(doc) {
   const errors = [];
 
-  if (!doc || typeof doc !== "object") {
-    return { valid: false, errors: ["Document must be a non-null object"] };
+  if (!doc || typeof doc !== 'object') {
+    return { valid: false, errors: ['Document must be a non-null object'] };
   }
 
   for (const [fieldName, meta] of Object.entries(PREGNANCY_DATA_FIELDS)) {

@@ -1,9 +1,9 @@
-const {onRequest} = require("firebase-functions/v2/https");
-const {onSchedule} = require("firebase-functions/v2/scheduler");
-const {defineSecret} = require("firebase-functions/params");
-const {TELEGRAM_API, getTelegramToken, sendMessage, setMyCommands} = require("./src/utils/telegram");
+const {onRequest} = require('firebase-functions/v2/https');
+const {onSchedule} = require('firebase-functions/v2/scheduler');
+const {defineSecret} = require('firebase-functions/params');
+const {TELEGRAM_API, getTelegramToken, sendMessage, setMyCommands} = require('./src/utils/telegram');
 const { routeCallback } = require('./src/handlers/router');
-const languageDialog = require("./src/handlers/onboarding/languageDialog");
+const languageDialog = require('./src/handlers/onboarding/languageDialog');
 const { getUser } = require('./src/collections/users');
 
 // ---------------------------------------------------------------------------
@@ -36,7 +36,7 @@ try {
 
 const { t } = require('./src/i18n');
 
-const TELEGRAM_TOKEN = defineSecret("TELEGRAM_TOKEN");
+const TELEGRAM_TOKEN = defineSecret('TELEGRAM_TOKEN');
 
 // ---------------------------------------------------------------------------
 // Graceful degradation — sendWeeklyNotifications handler may not be ready
@@ -52,15 +52,15 @@ try {
 
 exports.webhook = onRequest(
   {
-    invoker: "public",
+    invoker: 'public',
     secrets: [TELEGRAM_TOKEN],
   },
   async (req, res) => {
-    if (req.method === "GET") {
+    if (req.method === 'GET') {
       return registerWebhook(req, res);
     }
-    if (req.method !== "POST") {
-      res.status(405).send("Method Not Allowed");
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
       return;
     }
 
@@ -147,7 +147,7 @@ exports.webhook = onRequest(
 
       res.sendStatus(200);
     } catch (err) {
-      console.error("Error processing update:", err);
+      console.error('Error processing update:', err);
       res.sendStatus(200);
     }
   },

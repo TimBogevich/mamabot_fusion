@@ -7,7 +7,7 @@
  * @module telegram
  */
 
-const TELEGRAM_API = "https://api.telegram.org";
+const TELEGRAM_API = 'https://api.telegram.org';
 
 let _telegramToken = null;
 
@@ -16,7 +16,7 @@ function getTelegramToken() {
   _telegramToken = process.env.TELEGRAM_TOKEN;
   if (!_telegramToken) {
     throw new Error(
-      "TELEGRAM_TOKEN not configured. Set via firebase functions:secrets:set TELEGRAM_TOKEN or TELEGRAM_TOKEN env var."
+      'TELEGRAM_TOKEN not configured. Set via firebase functions:secrets:set TELEGRAM_TOKEN or TELEGRAM_TOKEN env var.',
     );
   }
   return _telegramToken;
@@ -48,8 +48,8 @@ async function sendMessage(chatId, text, options = {}) {
   }
 
   const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 

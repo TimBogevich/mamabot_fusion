@@ -11,16 +11,16 @@
  * Run: node --test functions/test/moodLogs.test.js
  */
 
-const { describe, it, after, before } = require("node:test");
-const assert = require("node:assert");
-const { initializeApp, getApps } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
+const { describe, it, after, before } = require('node:test');
+const assert = require('node:assert');
+const { initializeApp, getApps } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 const {
   MOOD_LOGS_COLLECTION,
   validateMoodLog,
   createMoodLog,
   getMoodLogsByUserAndDate,
-} = require("../src/schemas/moodLogs");
+} = require('../src/schemas/moodLogs');
 
 // ---------------------------------------------------------------------------
 // Lazy Firestore initializer
@@ -43,7 +43,7 @@ async function getDb() {
   try {
     if (getApps().length === 0) {
       initializeApp({
-        projectId: process.env.FIRESTORE_PROJECT_ID || "mamabot-test",
+        projectId: process.env.FIRESTORE_PROJECT_ID || 'mamabot-test',
       });
     }
     const db = getFirestore();
@@ -64,7 +64,7 @@ async function getDb() {
     return db;
   } catch (err) {
     console.warn(
-      "Firestore not available — integration tests will be skipped.",
+      'Firestore not available — integration tests will be skipped.',
       err.message,
     );
     _dbReady = false;
@@ -73,7 +73,7 @@ async function getDb() {
 }
 
 /** Prefix for all test documents to enable cleanup */
-const TEST_PREFIX = "_test_mood_";
+const TEST_PREFIX = '_test_mood_';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -88,8 +88,8 @@ async function cleanupTestDocs(db) {
   try {
     const snapshot = await db
       .collection(MOOD_LOGS_COLLECTION)
-      .where("userId", ">=", TEST_PREFIX)
-      .where("userId", "<", TEST_PREFIX + "\uf8ff")
+      .where('userId', '>=', TEST_PREFIX)
+      .where('userId', '<', TEST_PREFIX + '\uf8ff')
       .get();
 
     const batch = db.batch();
@@ -105,8 +105,8 @@ async function cleanupTestDocs(db) {
 /** A minimal valid mood log data object with createdAt: null for validation */
 function validMoodLogData(overrides = {}) {
   return {
-    userId: "user1",
-    date: "2026-06-15",
+    userId: 'user1',
+    date: '2026-06-15',
     mood: 3,
     energy: 3,
     createdAt: null,
@@ -118,81 +118,81 @@ function validMoodLogData(overrides = {}) {
 // Validation tests (no Firestore needed)
 // ---------------------------------------------------------------------------
 
-describe("mood_logs — validation", () => {
-  it("should reject invalid mood (0)", () => {
+describe('mood_logs — validation', () => {
+  it('should reject invalid mood (0)', () => {
     const result = validateMoodLog(validMoodLogData({ mood: 0 }));
     assert.strictEqual(result.valid, false);
     assert.ok(
-      result.errors.some((e) => e.includes("mood")),
-      "Should mention mood field",
+      result.errors.some((e) => e.includes('mood')),
+      'Should mention mood field',
     );
   });
 
-  it("should reject invalid mood (6)", () => {
+  it('should reject invalid mood (6)', () => {
     const result = validateMoodLog(validMoodLogData({ mood: 6 }));
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject invalid energy (0)", () => {
+  it('should reject invalid energy (0)', () => {
     const result = validateMoodLog(validMoodLogData({ energy: 0 }));
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject invalid energy (6)", () => {
+  it('should reject invalid energy (6)', () => {
     const result = validateMoodLog(validMoodLogData({ energy: 6 }));
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject missing userId", () => {
+  it('should reject missing userId', () => {
     const data = validMoodLogData();
     delete data.userId;
     const result = validateMoodLog(data);
     assert.strictEqual(result.valid, false);
     assert.ok(
-      result.errors.some((e) => e.includes("userId")),
-      "Should mention userId",
+      result.errors.some((e) => e.includes('userId')),
+      'Should mention userId',
     );
   });
 
-  it("should reject missing date", () => {
+  it('should reject missing date', () => {
     const data = validMoodLogData();
     delete data.date;
     const result = validateMoodLog(data);
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject missing mood", () => {
+  it('should reject missing mood', () => {
     const data = validMoodLogData();
     delete data.mood;
     const result = validateMoodLog(data);
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject missing energy", () => {
+  it('should reject missing energy', () => {
     const data = validMoodLogData();
     delete data.energy;
     const result = validateMoodLog(data);
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject invalid date format", () => {
-    const result = validateMoodLog(validMoodLogData({ date: "15-06-2026" }));
+  it('should reject invalid date format', () => {
+    const result = validateMoodLog(validMoodLogData({ date: '15-06-2026' }));
     assert.strictEqual(result.valid, false);
   });
 
-  it("should accept a valid mood log with note field omitted", () => {
+  it('should accept a valid mood log with note field omitted', () => {
     const result = validateMoodLog(validMoodLogData());
     assert.strictEqual(result.valid, true);
     assert.strictEqual(result.errors.length, 0);
   });
 
-  it("should accept a valid mood log with empty note string", () => {
-    const result = validateMoodLog(validMoodLogData({ note: "" }));
+  it('should accept a valid mood log with empty note string', () => {
+    const result = validateMoodLog(validMoodLogData({ note: '' }));
     assert.strictEqual(result.valid, true);
     assert.strictEqual(result.errors.length, 0);
   });
 
-  it("should accept boundary mood values (1 and 5)", () => {
+  it('should accept boundary mood values (1 and 5)', () => {
     assert.strictEqual(
       validateMoodLog(validMoodLogData({ mood: 1 })).valid,
       true,
@@ -203,7 +203,7 @@ describe("mood_logs — validation", () => {
     );
   });
 
-  it("should accept boundary energy values (1 and 5)", () => {
+  it('should accept boundary energy values (1 and 5)', () => {
     assert.strictEqual(
       validateMoodLog(validMoodLogData({ energy: 1 })).valid,
       true,
@@ -214,12 +214,12 @@ describe("mood_logs — validation", () => {
     );
   });
 
-  it("should reject non-integer mood", () => {
+  it('should reject non-integer mood', () => {
     const result = validateMoodLog(validMoodLogData({ mood: 3.5 }));
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject null for non-nullable field", () => {
+  it('should reject null for non-nullable field', () => {
     const result = validateMoodLog(validMoodLogData({ userId: null }));
     assert.strictEqual(result.valid, false);
   });
@@ -229,39 +229,39 @@ describe("mood_logs — validation", () => {
 // createMoodLog factory tests (no Firestore needed)
 // ---------------------------------------------------------------------------
 
-describe("createMoodLog() — factory function", () => {
-  it("should return a valid document object with all fields", () => {
+describe('createMoodLog() — factory function', () => {
+  it('should return a valid document object with all fields', () => {
     const doc = createMoodLog({
-      userId: "user1",
-      date: "2026-06-15",
+      userId: 'user1',
+      date: '2026-06-15',
       mood: 4,
       energy: 3,
-      note: "Great day!",
+      note: 'Great day!',
     });
-    assert.strictEqual(doc.userId, "user1");
-    assert.strictEqual(doc.date, "2026-06-15");
+    assert.strictEqual(doc.userId, 'user1');
+    assert.strictEqual(doc.date, '2026-06-15');
     assert.strictEqual(doc.mood, 4);
     assert.strictEqual(doc.energy, 3);
-    assert.strictEqual(doc.note, "Great day!");
+    assert.strictEqual(doc.note, 'Great day!');
     assert.ok(doc.createdAt);
   });
 
-  it("should default note to empty string when not provided", () => {
+  it('should default note to empty string when not provided', () => {
     const doc = createMoodLog({
-      userId: "user1",
-      date: "2026-06-15",
+      userId: 'user1',
+      date: '2026-06-15',
       mood: 3,
       energy: 3,
     });
-    assert.strictEqual(doc.note, "");
+    assert.strictEqual(doc.note, '');
   });
 
-  it("should throw on invalid data", () => {
+  it('should throw on invalid data', () => {
     assert.throws(
       () =>
         createMoodLog({
-          userId: "user1",
-          date: "invalid",
+          userId: 'user1',
+          date: 'invalid',
           mood: 3,
           energy: 3,
         }),
@@ -274,7 +274,7 @@ describe("createMoodLog() — factory function", () => {
 // Firestore integration tests (dynamically skipped when no backend)
 // ---------------------------------------------------------------------------
 
-describe("mood_logs — Firestore integration", () => {
+describe('mood_logs — Firestore integration', () => {
   let db = null;
   let firestoreOk = false;
 
@@ -289,39 +289,39 @@ describe("mood_logs — Firestore integration", () => {
     }
   });
 
-  it("should create and read a mood_log document", { skip: () => !firestoreOk }, async () => {
+  it('should create and read a mood_log document', { skip: () => !firestoreOk }, async () => {
     const docData = createMoodLog({
       userId: `${TEST_PREFIX}cr_test`,
-      date: "2026-06-15",
+      date: '2026-06-15',
       mood: 4,
       energy: 3,
-      note: "Feeling good today",
+      note: 'Feeling good today',
     });
 
     const ref = await db.collection(MOOD_LOGS_COLLECTION).add(docData);
     const snap = await ref.get();
-    assert.ok(snap.exists, "Document should exist");
+    assert.ok(snap.exists, 'Document should exist');
 
     const data = snap.data();
     assert.strictEqual(data.userId, `${TEST_PREFIX}cr_test`);
-    assert.strictEqual(data.date, "2026-06-15");
+    assert.strictEqual(data.date, '2026-06-15');
     assert.strictEqual(data.mood, 4);
     assert.strictEqual(data.energy, 3);
-    assert.strictEqual(data.note, "Feeling good today");
-    assert.ok(data.createdAt, "createdAt should be set (may be Timestamp)");
+    assert.strictEqual(data.note, 'Feeling good today');
+    assert.ok(data.createdAt, 'createdAt should be set (may be Timestamp)');
 
     // Clean up
     await ref.delete();
   });
 
-  it("should query by userId + date range", { skip: () => !firestoreOk }, async () => {
+  it('should query by userId + date range', { skip: () => !firestoreOk }, async () => {
     const testUserId = `${TEST_PREFIX}query_test`;
 
     // Create 3 documents with different dates
     const dates = [
-      { date: "2026-06-10", mood: 2, energy: 2 },
-      { date: "2026-06-12", mood: 4, energy: 3 },
-      { date: "2026-06-14", mood: 5, energy: 5 },
+      { date: '2026-06-10', mood: 2, energy: 2 },
+      { date: '2026-06-12', mood: 4, energy: 3 },
+      { date: '2026-06-14', mood: 5, energy: 5 },
     ];
 
     const refs = [];
@@ -331,7 +331,7 @@ describe("mood_logs — Firestore integration", () => {
         date: d.date,
         mood: d.mood,
         energy: d.energy,
-        note: "",
+        note: '',
       });
       const ref = await db.collection(MOOD_LOGS_COLLECTION).add(docData);
       refs.push(ref);
@@ -341,14 +341,14 @@ describe("mood_logs — Firestore integration", () => {
       const docs = await getMoodLogsByUserAndDate(
         db,
         testUserId,
-        "2026-06-09",
-        "2026-06-15",
+        '2026-06-09',
+        '2026-06-15',
       );
 
-      assert.strictEqual(docs.length, 3, "Should return all 3 documents");
-      assert.strictEqual(docs[0].date, "2026-06-14");
-      assert.strictEqual(docs[1].date, "2026-06-12");
-      assert.strictEqual(docs[2].date, "2026-06-10");
+      assert.strictEqual(docs.length, 3, 'Should return all 3 documents');
+      assert.strictEqual(docs[0].date, '2026-06-14');
+      assert.strictEqual(docs[1].date, '2026-06-12');
+      assert.strictEqual(docs[2].date, '2026-06-10');
     } finally {
       // Clean up
       const batch = db.batch();
@@ -359,14 +359,14 @@ describe("mood_logs — Firestore integration", () => {
     }
   });
 
-  it("should return empty array for non-matching date range", { skip: () => !firestoreOk }, async () => {
+  it('should return empty array for non-matching date range', { skip: () => !firestoreOk }, async () => {
     const docs = await getMoodLogsByUserAndDate(
       db,
       `${TEST_PREFIX}empty_test`,
-      "2025-01-01",
-      "2025-01-31",
+      '2025-01-01',
+      '2025-01-31',
     );
 
-    assert.strictEqual(docs.length, 0, "Should return empty array");
+    assert.strictEqual(docs.length, 0, 'Should return empty array');
   });
 });

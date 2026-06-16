@@ -11,16 +11,16 @@
  * Run: node --test functions/test/nutritionLogs.test.js
  */
 
-const { describe, it, after, before } = require("node:test");
-const assert = require("node:assert");
-const { initializeApp, getApps } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
+const { describe, it, after, before } = require('node:test');
+const assert = require('node:assert');
+const { initializeApp, getApps } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 const {
   NUTRITION_LOGS_COLLECTION,
   validateNutritionLog,
   createNutritionLog,
   getNutritionLogsByUserAndDate,
-} = require("../src/schemas/nutritionLogs");
+} = require('../src/schemas/nutritionLogs');
 
 // ---------------------------------------------------------------------------
 // Lazy Firestore initializer
@@ -42,7 +42,7 @@ async function getDb() {
   try {
     if (getApps().length === 0) {
       initializeApp({
-        projectId: process.env.FIRESTORE_PROJECT_ID || "mamabot-test",
+        projectId: process.env.FIRESTORE_PROJECT_ID || 'mamabot-test',
       });
     }
     const db = getFirestore();
@@ -62,7 +62,7 @@ async function getDb() {
     return db;
   } catch (err) {
     console.warn(
-      "Firestore not available — integration tests will be skipped.",
+      'Firestore not available — integration tests will be skipped.',
       err.message,
     );
     _dbReady = false;
@@ -71,7 +71,7 @@ async function getDb() {
 }
 
 /** Prefix for all test documents to enable cleanup */
-const TEST_PREFIX = "_test_nutrition_";
+const TEST_PREFIX = '_test_nutrition_';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -86,8 +86,8 @@ async function cleanupTestDocs(db) {
   try {
     const snapshot = await db
       .collection(NUTRITION_LOGS_COLLECTION)
-      .where("userId", ">=", TEST_PREFIX)
-      .where("userId", "<", TEST_PREFIX + "\uf8ff")
+      .where('userId', '>=', TEST_PREFIX)
+      .where('userId', '<', TEST_PREFIX + '\uf8ff')
       .get();
 
     const batch = db.batch();
@@ -103,10 +103,10 @@ async function cleanupTestDocs(db) {
 /** A minimal valid nutrition log data object with createdAt: null for validation */
 function validNutritionLogData(overrides = {}) {
   return {
-    userId: "user1",
-    date: "2026-06-15",
-    mealType: "lunch",
-    foods: ["apple", "banana"],
+    userId: 'user1',
+    date: '2026-06-15',
+    mealType: 'lunch',
+    foods: ['apple', 'banana'],
     waterGlasses: 2,
     createdAt: null,
     ...overrides,
@@ -117,95 +117,95 @@ function validNutritionLogData(overrides = {}) {
 // Validation tests (no Firestore needed)
 // ---------------------------------------------------------------------------
 
-describe("nutrition_logs — validation", () => {
+describe('nutrition_logs — validation', () => {
   it("should reject invalid mealType ('invalid')", () => {
     const result = validateNutritionLog(
-      validNutritionLogData({ mealType: "invalid" }),
+      validNutritionLogData({ mealType: 'invalid' }),
     );
     assert.strictEqual(result.valid, false);
     assert.ok(
-      result.errors.some((e) => e.includes("mealType")),
-      "Should mention mealType field",
+      result.errors.some((e) => e.includes('mealType')),
+      'Should mention mealType field',
     );
   });
 
-  it("should reject empty string mealType", () => {
+  it('should reject empty string mealType', () => {
     const result = validateNutritionLog(
-      validNutritionLogData({ mealType: "" }),
+      validNutritionLogData({ mealType: '' }),
     );
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject empty foods array", () => {
+  it('should reject empty foods array', () => {
     const result = validateNutritionLog(
       validNutritionLogData({ foods: [] }),
     );
     assert.strictEqual(result.valid, false);
     assert.ok(
-      result.errors.some((e) => e.includes("foods")),
-      "Should mention foods field",
+      result.errors.some((e) => e.includes('foods')),
+      'Should mention foods field',
     );
   });
 
-  it("should reject foods array with empty string item", () => {
+  it('should reject foods array with empty string item', () => {
     const result = validateNutritionLog(
-      validNutritionLogData({ foods: [""] }),
+      validNutritionLogData({ foods: [''] }),
     );
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject negative waterGlasses", () => {
+  it('should reject negative waterGlasses', () => {
     const result = validateNutritionLog(
       validNutritionLogData({ waterGlasses: -1 }),
     );
     assert.strictEqual(result.valid, false);
     assert.ok(
-      result.errors.some((e) => e.includes("waterGlasses")),
-      "Should mention waterGlasses field",
+      result.errors.some((e) => e.includes('waterGlasses')),
+      'Should mention waterGlasses field',
     );
   });
 
-  it("should reject missing userId", () => {
+  it('should reject missing userId', () => {
     const data = validNutritionLogData();
     delete data.userId;
     const result = validateNutritionLog(data);
     assert.strictEqual(result.valid, false);
     assert.ok(
-      result.errors.some((e) => e.includes("userId")),
-      "Should mention userId",
+      result.errors.some((e) => e.includes('userId')),
+      'Should mention userId',
     );
   });
 
-  it("should reject missing date", () => {
+  it('should reject missing date', () => {
     const data = validNutritionLogData();
     delete data.date;
     const result = validateNutritionLog(data);
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject missing mealType", () => {
+  it('should reject missing mealType', () => {
     const data = validNutritionLogData();
     delete data.mealType;
     const result = validateNutritionLog(data);
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject missing foods", () => {
+  it('should reject missing foods', () => {
     const data = validNutritionLogData();
     delete data.foods;
     const result = validateNutritionLog(data);
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject invalid date format", () => {
+  it('should reject invalid date format', () => {
     const result = validateNutritionLog(
-      validNutritionLogData({ date: "not-a-date" }),
+      validNutritionLogData({ date: 'not-a-date' }),
     );
     assert.strictEqual(result.valid, false);
   });
 
-  it("should accept valid meal types (breakfast, lunch, dinner, snack)", () => {
-    for (const mealType of ["breakfast", "lunch", "dinner", "snack"]) {
+  it('should accept valid meal types (breakfast, lunch, dinner, snack)', () => {
+    for (const mealType of ['breakfast', 'lunch', 'dinner', 'snack']) {
       const result = validateNutritionLog(
         validNutritionLogData({ mealType }),
       );
@@ -217,10 +217,10 @@ describe("nutrition_logs — validation", () => {
     }
   });
 
-  it("should accept a valid nutrition log with vitamins and waterGlasses", () => {
+  it('should accept a valid nutrition log with vitamins and waterGlasses', () => {
     const result = validateNutritionLog(
       validNutritionLogData({
-        vitamins: ["vitamin D", "iron"],
+        vitamins: ['vitamin D', 'iron'],
         waterGlasses: 5,
       }),
     );
@@ -228,21 +228,21 @@ describe("nutrition_logs — validation", () => {
     assert.strictEqual(result.errors.length, 0);
   });
 
-  it("should accept waterGlasses = 0", () => {
+  it('should accept waterGlasses = 0', () => {
     const result = validateNutritionLog(
       validNutritionLogData({ waterGlasses: 0 }),
     );
     assert.strictEqual(result.valid, true);
   });
 
-  it("should reject non-integer waterGlasses", () => {
+  it('should reject non-integer waterGlasses', () => {
     const result = validateNutritionLog(
       validNutritionLogData({ waterGlasses: 2.5 }),
     );
     assert.strictEqual(result.valid, false);
   });
 
-  it("should reject null for non-nullable field", () => {
+  it('should reject null for non-nullable field', () => {
     const result = validateNutritionLog(
       validNutritionLogData({ userId: null }),
     );
@@ -254,77 +254,77 @@ describe("nutrition_logs — validation", () => {
 // createNutritionLog factory tests (no Firestore needed)
 // ---------------------------------------------------------------------------
 
-describe("createNutritionLog() — factory function", () => {
-  it("should return a valid document object with all fields", () => {
+describe('createNutritionLog() — factory function', () => {
+  it('should return a valid document object with all fields', () => {
     const doc = createNutritionLog({
-      userId: "user1",
-      date: "2026-06-15",
-      mealType: "dinner",
-      foods: ["chicken", "rice", "broccoli"],
-      vitamins: ["vitamin C"],
+      userId: 'user1',
+      date: '2026-06-15',
+      mealType: 'dinner',
+      foods: ['chicken', 'rice', 'broccoli'],
+      vitamins: ['vitamin C'],
       waterGlasses: 3,
     });
-    assert.strictEqual(doc.userId, "user1");
-    assert.strictEqual(doc.date, "2026-06-15");
-    assert.strictEqual(doc.mealType, "dinner");
-    assert.deepStrictEqual(doc.foods, ["chicken", "rice", "broccoli"]);
-    assert.deepStrictEqual(doc.vitamins, ["vitamin C"]);
+    assert.strictEqual(doc.userId, 'user1');
+    assert.strictEqual(doc.date, '2026-06-15');
+    assert.strictEqual(doc.mealType, 'dinner');
+    assert.deepStrictEqual(doc.foods, ['chicken', 'rice', 'broccoli']);
+    assert.deepStrictEqual(doc.vitamins, ['vitamin C']);
     assert.strictEqual(doc.waterGlasses, 3);
     assert.ok(doc.createdAt);
   });
 
-  it("should default vitamins to empty array when not provided", () => {
+  it('should default vitamins to empty array when not provided', () => {
     const doc = createNutritionLog({
-      userId: "user1",
-      date: "2026-06-15",
-      mealType: "breakfast",
-      foods: ["toast"],
+      userId: 'user1',
+      date: '2026-06-15',
+      mealType: 'breakfast',
+      foods: ['toast'],
       waterGlasses: 1,
     });
     assert.deepStrictEqual(doc.vitamins, []);
   });
 
-  it("should default waterGlasses to 0 when not provided", () => {
+  it('should default waterGlasses to 0 when not provided', () => {
     const doc = createNutritionLog({
-      userId: "user1",
-      date: "2026-06-15",
-      mealType: "snack",
-      foods: ["apple"],
+      userId: 'user1',
+      date: '2026-06-15',
+      mealType: 'snack',
+      foods: ['apple'],
     });
     assert.strictEqual(doc.waterGlasses, 0);
   });
 
-  it("should default both vitamins and waterGlasses when omitted", () => {
+  it('should default both vitamins and waterGlasses when omitted', () => {
     const doc = createNutritionLog({
-      userId: "user1",
-      date: "2026-06-15",
-      mealType: "lunch",
-      foods: ["salad"],
+      userId: 'user1',
+      date: '2026-06-15',
+      mealType: 'lunch',
+      foods: ['salad'],
     });
     assert.deepStrictEqual(doc.vitamins, []);
     assert.strictEqual(doc.waterGlasses, 0);
   });
 
-  it("should throw on invalid data", () => {
+  it('should throw on invalid data', () => {
     assert.throws(
       () =>
         createNutritionLog({
-          userId: "user1",
-          date: "2026-06-15",
-          mealType: "invalid",
-          foods: ["apple"],
+          userId: 'user1',
+          date: '2026-06-15',
+          mealType: 'invalid',
+          foods: ['apple'],
         }),
       /validation failed/i,
     );
   });
 
-  it("should throw on empty foods array", () => {
+  it('should throw on empty foods array', () => {
     assert.throws(
       () =>
         createNutritionLog({
-          userId: "user1",
-          date: "2026-06-15",
-          mealType: "lunch",
+          userId: 'user1',
+          date: '2026-06-15',
+          mealType: 'lunch',
           foods: [],
         }),
       /validation failed/i,
@@ -336,7 +336,7 @@ describe("createNutritionLog() — factory function", () => {
 // Firestore integration tests (dynamically skipped when no backend)
 // ---------------------------------------------------------------------------
 
-describe("nutrition_logs — Firestore integration", () => {
+describe('nutrition_logs — Firestore integration', () => {
   let db = null;
   let firestoreOk = false;
 
@@ -351,38 +351,38 @@ describe("nutrition_logs — Firestore integration", () => {
     }
   });
 
-  it("should create and read a nutrition_log document", { skip: () => !firestoreOk }, async () => {
+  it('should create and read a nutrition_log document', { skip: () => !firestoreOk }, async () => {
     const docData = createNutritionLog({
       userId: `${TEST_PREFIX}cr_test`,
-      date: "2026-06-15",
-      mealType: "lunch",
-      foods: ["sandwich", "apple", "water"],
-      vitamins: ["vitamin D"],
+      date: '2026-06-15',
+      mealType: 'lunch',
+      foods: ['sandwich', 'apple', 'water'],
+      vitamins: ['vitamin D'],
       waterGlasses: 2,
     });
 
     const ref = await db.collection(NUTRITION_LOGS_COLLECTION).add(docData);
     const snap = await ref.get();
-    assert.ok(snap.exists, "Document should exist");
+    assert.ok(snap.exists, 'Document should exist');
 
     const data = snap.data();
     assert.strictEqual(data.userId, `${TEST_PREFIX}cr_test`);
-    assert.strictEqual(data.date, "2026-06-15");
-    assert.strictEqual(data.mealType, "lunch");
-    assert.deepStrictEqual(data.foods, ["sandwich", "apple", "water"]);
-    assert.deepStrictEqual(data.vitamins, ["vitamin D"]);
+    assert.strictEqual(data.date, '2026-06-15');
+    assert.strictEqual(data.mealType, 'lunch');
+    assert.deepStrictEqual(data.foods, ['sandwich', 'apple', 'water']);
+    assert.deepStrictEqual(data.vitamins, ['vitamin D']);
     assert.strictEqual(data.waterGlasses, 2);
-    assert.ok(data.createdAt, "createdAt should be set (may be Timestamp)");
+    assert.ok(data.createdAt, 'createdAt should be set (may be Timestamp)');
 
     await ref.delete();
   });
 
-  it("should have vitamins default to empty array in Firestore", { skip: () => !firestoreOk }, async () => {
+  it('should have vitamins default to empty array in Firestore', { skip: () => !firestoreOk }, async () => {
     const docData = createNutritionLog({
       userId: `${TEST_PREFIX}vitamins_test`,
-      date: "2026-06-15",
-      mealType: "breakfast",
-      foods: ["toast"],
+      date: '2026-06-15',
+      mealType: 'breakfast',
+      foods: ['toast'],
       waterGlasses: 1,
     });
     // vitamins is not passed, so it should default to []
@@ -393,20 +393,20 @@ describe("nutrition_logs — Firestore integration", () => {
     assert.deepStrictEqual(
       data.vitamins,
       [],
-      "vitamins should default to empty array",
+      'vitamins should default to empty array',
     );
 
     await ref.delete();
   });
 
-  it("should query by userId + date range", { skip: () => !firestoreOk }, async () => {
+  it('should query by userId + date range', { skip: () => !firestoreOk }, async () => {
     const testUserId = `${TEST_PREFIX}query_test`;
 
     // Create 3 documents with different dates
     const entries = [
-      { date: "2026-06-10", mealType: "breakfast", foods: ["eggs"] },
-      { date: "2026-06-12", mealType: "lunch", foods: ["salad"] },
-      { date: "2026-06-14", mealType: "dinner", foods: ["pasta"] },
+      { date: '2026-06-10', mealType: 'breakfast', foods: ['eggs'] },
+      { date: '2026-06-12', mealType: 'lunch', foods: ['salad'] },
+      { date: '2026-06-14', mealType: 'dinner', foods: ['pasta'] },
     ];
 
     const refs = [];
@@ -426,15 +426,15 @@ describe("nutrition_logs — Firestore integration", () => {
       const docs = await getNutritionLogsByUserAndDate(
         db,
         testUserId,
-        "2026-06-09",
-        "2026-06-15",
+        '2026-06-09',
+        '2026-06-15',
       );
 
-      assert.strictEqual(docs.length, 3, "Should return all 3 documents");
+      assert.strictEqual(docs.length, 3, 'Should return all 3 documents');
       // Should be ordered by date descending
-      assert.strictEqual(docs[0].date, "2026-06-14");
-      assert.strictEqual(docs[1].date, "2026-06-12");
-      assert.strictEqual(docs[2].date, "2026-06-10");
+      assert.strictEqual(docs[0].date, '2026-06-14');
+      assert.strictEqual(docs[1].date, '2026-06-12');
+      assert.strictEqual(docs[2].date, '2026-06-10');
     } finally {
       const batch = db.batch();
       for (const ref of refs) {
@@ -444,14 +444,14 @@ describe("nutrition_logs — Firestore integration", () => {
     }
   });
 
-  it("should return empty array for non-matching date range", { skip: () => !firestoreOk }, async () => {
+  it('should return empty array for non-matching date range', { skip: () => !firestoreOk }, async () => {
     const docs = await getNutritionLogsByUserAndDate(
       db,
       `${TEST_PREFIX}empty_test`,
-      "2025-01-01",
-      "2025-01-31",
+      '2025-01-01',
+      '2025-01-31',
     );
 
-    assert.strictEqual(docs.length, 0, "Should return empty array");
+    assert.strictEqual(docs.length, 0, 'Should return empty array');
   });
 });

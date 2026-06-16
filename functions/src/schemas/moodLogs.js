@@ -13,7 +13,7 @@
  *   Requires composite index on (userId ASC, date DESC)
  */
 
-const { FieldValue } = require("firebase-admin/firestore");
+const { FieldValue } = require('firebase-admin/firestore');
 
 // ---------------------------------------------------------------------------
 // Field metadata
@@ -22,42 +22,42 @@ const { FieldValue } = require("firebase-admin/firestore");
 /** @type {Object<string, {type: string, required: boolean, description: string, validate?: Function}>} */
 const MOOD_LOG_FIELDS = {
   userId: {
-    type: "string",
+    type: 'string',
     required: true,
-    description: "Telegram user ID (stringified)",
-    validate: (v) => typeof v === "string" && v.length > 0,
+    description: 'Telegram user ID (stringified)',
+    validate: (v) => typeof v === 'string' && v.length > 0,
   },
   date: {
-    type: "string",
+    type: 'string',
     required: true,
-    description: "Date in ISO 8601 format (YYYY-MM-DD)",
+    description: 'Date in ISO 8601 format (YYYY-MM-DD)',
     validate: (v) =>
-      typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v),
+      typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v),
   },
   mood: {
-    type: "number",
+    type: 'number',
     required: true,
-    description: "Mood rating (1–5, 1 = very bad, 5 = excellent)",
-    validate: (v) => typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 5,
+    description: 'Mood rating (1–5, 1 = very bad, 5 = excellent)',
+    validate: (v) => typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 5,
   },
   energy: {
-    type: "number",
+    type: 'number',
     required: true,
-    description: "Energy level (1–5, 1 = very low, 5 = very high)",
-    validate: (v) => typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 5,
+    description: 'Energy level (1–5, 1 = very low, 5 = very high)',
+    validate: (v) => typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 5,
   },
   note: {
-    type: "string",
+    type: 'string',
     required: false,
-    description: "Optional note about the mood/energy state",
-    validate: (v) => typeof v === "string",
+    description: 'Optional note about the mood/energy state',
+    validate: (v) => typeof v === 'string',
   },
   createdAt: {
-    type: "Timestamp",
+    type: 'Timestamp',
     required: true,
     nullable: true,
     description:
-      "Time of document creation (Firestore serverTimestamp; null before write)",
+      'Time of document creation (Firestore serverTimestamp; null before write)',
   },
 };
 
@@ -65,7 +65,7 @@ const MOOD_LOG_FIELDS = {
 // Collection name
 // ---------------------------------------------------------------------------
 
-const MOOD_LOGS_COLLECTION = "mood_logs";
+const MOOD_LOGS_COLLECTION = 'mood_logs';
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -82,8 +82,8 @@ const MOOD_LOGS_COLLECTION = "mood_logs";
 function validateMoodLog(doc) {
   const errors = [];
 
-  if (!doc || typeof doc !== "object") {
-    return { valid: false, errors: ["Document must be a non-null object"] };
+  if (!doc || typeof doc !== 'object') {
+    return { valid: false, errors: ['Document must be a non-null object'] };
   }
 
   for (const [fieldName, meta] of Object.entries(MOOD_LOG_FIELDS)) {
@@ -142,13 +142,13 @@ function createMoodLog({ userId, date, mood, energy, note }) {
     date,
     mood,
     energy,
-    note: note || "",
+    note: note || '',
     createdAt: FieldValue.serverTimestamp(),
   };
 
   const { valid, errors } = validateMoodLog(doc);
   if (!valid) {
-    throw new Error(`Mood log validation failed: ${errors.join("; ")}`);
+    throw new Error(`Mood log validation failed: ${errors.join('; ')}`);
   }
 
   return doc;
@@ -174,10 +174,10 @@ function createMoodLog({ userId, date, mood, energy, note }) {
 async function getMoodLogsByUserAndDate(db, userId, startDate, endDate) {
   const snapshot = await db
     .collection(MOOD_LOGS_COLLECTION)
-    .where("userId", "==", userId)
-    .where("date", ">=", startDate)
-    .where("date", "<=", endDate)
-    .orderBy("date", "desc")
+    .where('userId', '==', userId)
+    .where('date', '>=', startDate)
+    .where('date', '<=', endDate)
+    .orderBy('date', 'desc')
     .get();
 
   const docs = [];

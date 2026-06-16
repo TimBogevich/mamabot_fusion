@@ -19,35 +19,35 @@
  *   GOOGLE_APPLICATION_CREDENTIALS=key.json npx vitest run ...
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { validatePregnancyData } from "../pregnancy_data.js";
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { validatePregnancyData } from '../pregnancy_data.js';
 
 // ---------------------------------------------------------------------------
 // Test data
 // ---------------------------------------------------------------------------
 
-const TEST_DOC_ID = "1_ru";
+const TEST_DOC_ID = '1_ru';
 
 const TEST_DOC = Object.freeze({
   weekNumber: 1,
-  language: "ru",
+  language: 'ru',
   babyDevelopment:
-    "Оплодотворённая яйцеклетка начинает активно делиться, " +
-    "продвигаясь по маточной трубе в полость матки.",
+    'Оплодотворённая яйцеклетка начинает активно делиться, ' +
+    'продвигаясь по маточной трубе в полость матки.',
   motherChanges:
-    "Задержка менструации — самый первый и главный признак " +
-    "беременности. Могут появиться лёгкие кровянистые выделения " +
-    "(имплантационное кровотечение).",
+    'Задержка менструации — самый первый и главный признак ' +
+    'беременности. Могут появиться лёгкие кровянистые выделения ' +
+    '(имплантационное кровотечение).',
   nutritionTips:
-    "Начните приём фолиевой кислоты, если ещё не начали. " +
-    "Пейте достаточное количество воды, избегайте алкоголя и кофеина.",
-  vitaminRecommendations: "Фолиевая кислота 400 мкг/сутки",
+    'Начните приём фолиевой кислоты, если ещё не начали. ' +
+    'Пейте достаточное количество воды, избегайте алкоголя и кофеина.',
+  vitaminRecommendations: 'Фолиевая кислота 400 мкг/сутки',
   symptomsCommon:
-    "Усталость, чувствительность груди, тошнота, " +
-    "повышенная утомляемость",
-  babySize: "размером с маковое зёрнышко",
+    'Усталость, чувствительность груди, тошнота, ' +
+    'повышенная утомляемость',
+  babySize: 'размером с маковое зёрнышко',
   babyWeightGrams: 4,
 });
 
@@ -63,7 +63,7 @@ let db;
 function tryInitFirestore() {
   try {
     if (getApps().length === 0) {
-      initializeApp({ projectId: "mamabot-97d22" });
+      initializeApp({ projectId: 'mamabot-97d22' });
     }
     const instance = getFirestore();
 
@@ -88,21 +88,21 @@ beforeAll(() => {
 // Integration tests
 // ---------------------------------------------------------------------------
 
-describe("pregnancy_data — Firestore integration", () => {
+describe('pregnancy_data — Firestore integration', () => {
   const hasBackend = !!db;
 
-  it("should have a Firestore backend configured", () => {
+  it('should have a Firestore backend configured', () => {
     // This will show in test output why the integration tests are skipped
     if (!hasBackend) {
       console.warn(
-        "\n  ⚠ No Firestore backend available. Set FIRESTORE_EMULATOR_HOST " +
-          "or GOOGLE_APPLICATION_CREDENTIALS to run integration tests.",
+        '\n  ⚠ No Firestore backend available. Set FIRESTORE_EMULATOR_HOST ' +
+          'or GOOGLE_APPLICATION_CREDENTIALS to run integration tests.',
       );
     }
     // We don't assert here — the individual tests check hasBackend
   });
 
-  it("should validate before writing to Firestore", () => {
+  it('should validate before writing to Firestore', () => {
     const result = validatePregnancyData({
       ...TEST_DOC,
       createdAt: null,
@@ -111,23 +111,23 @@ describe("pregnancy_data — Firestore integration", () => {
     expect(result.valid).toBe(true);
   });
 
-  describe("write and read (requires Firestore backend)", () => {
+  describe('write and read (requires Firestore backend)', () => {
     if (!hasBackend) {
-      it.skip("no Firestore backend — test skipped");
+      it.skip('no Firestore backend — test skipped');
       return;
     }
 
     afterAll(async () => {
       // Clean up: delete the test document
       try {
-        await db.collection("pregnancy_data").doc(TEST_DOC_ID).delete();
+        await db.collection('pregnancy_data').doc(TEST_DOC_ID).delete();
       } catch {
         // Ignore cleanup errors
       }
     });
 
-    it("should write a test document to pregnancy_data collection", async () => {
-      const docRef = db.collection("pregnancy_data").doc(TEST_DOC_ID);
+    it('should write a test document to pregnancy_data collection', async () => {
+      const docRef = db.collection('pregnancy_data').doc(TEST_DOC_ID);
       await docRef.set({
         ...TEST_DOC,
         createdAt: FieldValue.serverTimestamp(),

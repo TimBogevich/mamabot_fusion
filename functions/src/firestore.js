@@ -17,10 +17,10 @@
  *   - FIRESTORE_EMULATOR_HOST environment variable for local development
  */
 
-const { getApps, initializeApp } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getApps, initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 
-const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "mamabot-97d22";
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mamabot-97d22';
 
 // ---------------------------------------------------------------------------
 // Initialize Firebase Admin SDK
@@ -30,7 +30,7 @@ if (getApps().length === 0) {
   initializeApp({ projectId: PROJECT_ID });
   console.log(`[firestore] Firebase Admin SDK initialized (project: ${PROJECT_ID})`);
 } else {
-  console.log(`[firestore] Firebase Admin SDK already initialized`);
+  console.log('[firestore] Firebase Admin SDK already initialized');
 }
 
 // ---------------------------------------------------------------------------
