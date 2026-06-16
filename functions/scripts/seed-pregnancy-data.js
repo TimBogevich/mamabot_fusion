@@ -63,10 +63,10 @@ async function seedPregnancyData(db) {
     const docRef = db.collection(COLLECTION).doc(docId);
     await docRef.set({
       ...week,
-      motherChanges: '',
-      nutritionTips: '',
-      vitaminRecommendations: '',
-      symptomsCommon: '',
+      motherChanges: week.motherChanges || '',
+      nutritionTips: week.nutritionTips || '',
+      vitaminRecommendations: week.vitaminRecommendations || '',
+      symptomsCommon: week.symptomsCommon || '',
       language: 'ru',
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
@@ -79,10 +79,10 @@ async function seedPregnancyData(db) {
     const docRef = db.collection(COLLECTION).doc(docId);
     await docRef.set({
       ...week,
-      motherChanges: '',
-      nutritionTips: '',
-      vitaminRecommendations: '',
-      symptomsCommon: '',
+      motherChanges: week.motherChanges || '',
+      nutritionTips: week.nutritionTips || '',
+      vitaminRecommendations: week.vitaminRecommendations || '',
+      symptomsCommon: week.symptomsCommon || '',
       language: 'en',
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
