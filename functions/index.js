@@ -42,6 +42,14 @@ try {
   // nutrition handler not available
 }
 
+/** @type {((chatId: number|string, text: string) => Promise<Object>)|null} */
+let _handlePartnerInput = null;
+try {
+  _handlePartnerInput = require('./src/handlers/partner/partnerMenu').handlePartnerInput;
+} catch (_err) {
+  // partner handler not available
+}
+
 const { t } = require('./src/i18n');
 
 const TELEGRAM_TOKEN = defineSecret('TELEGRAM_TOKEN');
@@ -132,6 +140,20 @@ exports.webhook = onRequest(
           }
         } catch (_err) {
           console.warn('[webhook] nutritionState routing error:', _err.message);
+        }
+      }
+
+      // 3.7: Route text messages based on partner state
+      if (_handlePartnerInput) {
+        try {
+          const user = await getUser(chatId);
+          if (user && user.partnerState === 'awaiting_partner_code') {
+            await _handlePartnerInput(chatId, text);
+            res.sendStatus(200);
+            return;
+          }
+        } catch (_err) {
+          console.warn('[webhook] partnerState routing error:', _err.message);
         }
       }
 

@@ -83,6 +83,14 @@ try {
   // Модуль питания ещё не смержен
 }
 
+/** @type {((chatId: number|string, callbackData: string) => Promise<Object>)|null} */
+let _handlePartnerCallback = null;
+try {
+  _handlePartnerCallback = require('./partner/partnerMenu').handlePartnerCallback;
+} catch (_err) {
+  // Модуль партнёра ещё не смержен
+}
+
 // ---------------------------------------------------------------------------
 // Внутренние ссылки на зависимости (мутабельные для тестирования)
 // ---------------------------------------------------------------------------
@@ -119,6 +127,7 @@ const ROUTES = {
   'week_': 'week',
   'mood_': 'mood',
   'nutrition_': 'nutrition',
+  'partner_': 'partner',
 };
 
 // ---------------------------------------------------------------------------
@@ -217,6 +226,10 @@ async function handleMenu(chatId, callbackData) {
 
   if (callbackData === 'menu_nutrition' && _handleNutritionCallback) {
     return _handleNutritionCallback(chatId, callbackData);
+  }
+
+  if (callbackData === 'menu_invite_partner' && _handlePartnerCallback) {
+    return _handlePartnerCallback(chatId, callbackData);
   }
 
   return handleNotImplemented(chatId, callbackData);
@@ -324,6 +337,11 @@ async function routeCallback(chatId, callbackData, context) {
         return _handleNutritionCallback(chatId, callbackData);
       }
       return handleNotImplemented(chatId, callbackData);
+    case 'partner':
+      if (_handlePartnerCallback) {
+        return _handlePartnerCallback(chatId, callbackData);
+      }
+      return handleNotImplemented(chatId, callbackData);
     default:
       return handleUnknownCallback(chatId);
   }
@@ -389,6 +407,7 @@ function __inject(deps) {
   if (deps.handleWeekCallback !== undefined) _handleWeekCallback = deps.handleWeekCallback;
   if (deps.handleMoodCallback !== undefined) _handleMoodCallback = deps.handleMoodCallback;
   if (deps.handleNutritionCallback !== undefined) _handleNutritionCallback = deps.handleNutritionCallback;
+  if (deps.handlePartnerCallback !== undefined) _handlePartnerCallback = deps.handlePartnerCallback;
 }
 
 module.exports = { routeCallback, __inject };

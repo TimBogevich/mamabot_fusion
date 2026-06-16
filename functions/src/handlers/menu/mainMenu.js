@@ -8,6 +8,7 @@
  *   - «Моя неделя»  → menu_my_week
  *   - «Дневник настроения» → menu_mood_diary
  *   - «Питание»     → menu_nutrition
+ *   - «Пригласить партнёра» → menu_invite_partner
  *   - «Настройки»   → menu_settings
  *
  * Используется на финальном шаге онбординга и при повторном /start после FN-024.
@@ -47,9 +48,10 @@ async function _showMainMenuImpl(chatId) {
   const myWeekLabel = await _t(chatId, 'menu.my_week');
   const moodDiaryLabel = await _t(chatId, 'menu.mood_diary');
   const nutritionLabel = await _t(chatId, 'menu.nutrition');
+  const invitePartnerLabel = await _t(chatId, 'menu.invite_partner');
   const settingsLabel = await _t(chatId, 'menu.settings');
 
-  // Inline-клавиатура: 2 ряда по 2 кнопки
+  // Inline-клавиатура: 3 ряда
   const keyboard = {
     inline_keyboard: [
       [
@@ -58,6 +60,9 @@ async function _showMainMenuImpl(chatId) {
       ],
       [
         { text: nutritionLabel, callback_data: 'menu_nutrition' },
+        { text: invitePartnerLabel, callback_data: 'menu_invite_partner' },
+      ],
+      [
         { text: settingsLabel, callback_data: 'menu_settings' },
       ],
     ],
