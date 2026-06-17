@@ -1,0 +1,65 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: functions
+
+      - name: Run lint
+        run: npm run lint
+        working-directory: functions
+
+      - name: Run tests
+        run: npm test
+        working-directory: functions
+
+      - name: Verify users schema (emulator)
+        run: npx firebase emulators:exec --only firestore --project mamabot-97d22 "npm run verify:users-schema"
+        working-directory: functions
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Deploy to Firebase
+        run: npx firebase deploy --only functions,firestore:rules --project mamabot-97d22
+        working-directory: functions
+
+      - name: Health check
+        run: |
+          echo "Waiting 15s for function to become active..."
+          sleep 15
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            https://us-central1-mamabot-97d22.cloudfunctions.net/webhook
