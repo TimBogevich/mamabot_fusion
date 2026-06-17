@@ -1,10 +1,10 @@
 /**
  * @fileoverview Модуль рендеринга главного меню MamaBot.
  *
- * Экспортирует функцию showMainMenu(chatId), которая отправляет в Telegram-чат
- * два сообщения:
- *   1. inline-кнопка «📋 Главное меню» (callback_data="menu_show")
- *   2. reply-клавиатура 3×2 с разделами бота под полем ввода
+ * Экспортирует:
+ *   - showMainMenu(chatId) — отправляет inline-кнопку «📋 Главное меню» + reply-клавиатуру
+ *   - sendReplyKeyboard(chatId) — отправляет только reply-клавиатуру 3×2
+ *   - __inject(deps) — тестовый хук для подмены зависимостей
  *
  * reply_markup с inline_keyboard и keyboard mutually exclusive в Telegram API,
  * поэтому используются два отдельных вызова sendMessage.
@@ -30,18 +30,27 @@ let _sendMessage = sendMessage;
 // ---------------------------------------------------------------------------
 
 /**
- * Вспомогательная async-функция для выполнения тела showMainMenu после
- * синхронной валидации chatId.
+ * Отправляет reply-клавиатуру 3×2 с разделами бота под полем ввода.
  *
- * @param {number|string} chatId - Telegram chat ID (гарантированно не null/undefined)
- * @returns {Promise<Object>} Результат вызова _sendMessage для inline-сообщения
+ * Формирует одно сообщение с reply_markup.keyboard (6 кнопок в 3 ряда),
+ * resize_keyboard: true и input_field_placeholder.
+ *
+ * @param {number|string} chatId - Telegram chat ID (не null/undefined)
+ * @returns {Promise<Object>} Результат вызова _sendMessage
+ * @throws {Error} Синхронно, если chatId не передан (null или undefined)
+ *
+ * @example
+ *   const { sendReplyKeyboard } = require('./handlers/menu/mainMenu');
+ *   await sendReplyKeyboard(12345);
  */
-async function _showMainMenuImpl(chatId) {
+async function sendReplyKeyboard(chatId) {
+  // Синхронная валидация — выбрасывается ДО возврата Promise
+  if (chatId === null || chatId === undefined) {
+    throw new Error('chatId is required');
+  }
+
   // Заголовок сообщения
   const headerText = await _t(chatId, 'menu.my_week');
-
-  // Подписи для inline-кнопки
-  const showButtonLabel = await _t(chatId, 'menu.show_button');
 
   // Подписи для reply-кнопок
   const myWeekLabel = await _t(chatId, 'menu.my_week');
@@ -54,19 +63,8 @@ async function _showMainMenuImpl(chatId) {
   // Placeholder для reply-клавиатуры
   const placeholder = await _t(chatId, 'menu.placeholder');
 
-  // 1. Сообщение с inline-кнопкой «📋 Главное меню»
-  const inlineResult = await _sendMessage(chatId, headerText, {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: showButtonLabel, callback_data: 'menu_show' },
-        ],
-      ],
-    },
-  });
-
-  // 2. Сообщение с reply-клавиатурой 3×2 под полем ввода
-  await _sendMessage(chatId, headerText, {
+  // Сообщение с reply-клавиатурой 3×2 под полем ввода
+  return _sendMessage(chatId, headerText, {
     reply_markup: {
       keyboard: [
         [
@@ -84,6 +82,32 @@ async function _showMainMenuImpl(chatId) {
       ],
       resize_keyboard: true,
       input_field_placeholder: placeholder,
+    },
+  });
+}
+
+/**
+ * Вспомогательная async-функция для выполнения тела showMainMenu после
+ * синхронной валидации chatId.
+ *
+ * @param {number|string} chatId - Telegram chat ID (гарантированно не null/undefined)
+ * @returns {Promise<Object>} Результат вызова _sendMessage для inline-сообщения
+ */
+async function _showMainMenuImpl(chatId) {
+  // 1. Отправляем reply-клавиатуру через вынесенную функцию
+  await sendReplyKeyboard(chatId);
+
+  // 2. Сообщение с inline-кнопкой «📋 Главное меню»
+  const headerText = await _t(chatId, 'menu.my_week');
+  const showButtonLabel = await _t(chatId, 'menu.show_button');
+
+  const inlineResult = await _sendMessage(chatId, headerText, {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: showButtonLabel, callback_data: 'menu_show' },
+        ],
+      ],
     },
   });
 
@@ -140,4 +164,4 @@ function __inject(deps) {
   if (deps.sendMessage) _sendMessage = deps.sendMessage;
 }
 
-module.exports = { showMainMenu, __inject };
+module.exports = { showMainMenu, sendReplyKeyboard, __inject };

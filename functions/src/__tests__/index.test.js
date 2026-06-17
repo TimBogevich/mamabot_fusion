@@ -76,6 +76,7 @@ describe('TELEGRAM_TOKEN resolution', () => {
 describe('handleReplyKeyboardText', () => {
   let mockT;
   let mockSendMessage;
+  let mockGetUser;
   let mockShowWeekInfo;
   let mockShowMoodMenu;
   let mockShowNutritionMenu;
@@ -91,6 +92,7 @@ describe('handleReplyKeyboardText', () => {
 
     mockT = vi.fn();
     mockSendMessage = vi.fn();
+    mockGetUser = vi.fn();
     mockShowWeekInfo = vi.fn();
     mockShowMoodMenu = vi.fn();
     mockShowNutritionMenu = vi.fn();
@@ -109,6 +111,7 @@ describe('handleReplyKeyboardText', () => {
     injectFn({
       t: mockT,
       sendMessage: mockSendMessage,
+      getUser: mockGetUser,
       showMainMenu: mockShowMainMenu,
       showWeekInfo: mockShowWeekInfo,
       showMoodMenu: mockShowMoodMenu,
@@ -129,10 +132,13 @@ describe('handleReplyKeyboardText', () => {
         'menu.show_button': '📋 Главное меню',
         'help.message': 'Текст помощи',
         'error.generic': 'Произошла ошибка',
+        'onboarding.complete_first': '❌ Сначала заверши регистрацию. Используй /start.',
       };
       return Promise.resolve(labels[key] || key);
     });
     mockSendMessage.mockResolvedValue({ ok: true });
+    // Default: user exists and has completed onboarding
+    mockGetUser.mockResolvedValue({ chatId: 12345, language: 'ru', lmpDate: '2026-01-15' });
   });
 
   afterEach(() => {
@@ -202,6 +208,7 @@ describe('handleReplyKeyboardText', () => {
       injectFn({
         t: mockT,
         sendMessage: mockSendMessage,
+        getUser: mockGetUser,
         showMainMenu: mockShowMainMenu,
         showWeekInfo: null,
         showMoodMenu: mockShowMoodMenu,
@@ -219,6 +226,7 @@ describe('handleReplyKeyboardText', () => {
       injectFn({
         t: mockT,
         sendMessage: mockSendMessage,
+        getUser: mockGetUser,
         showMainMenu: null,
         showWeekInfo: mockShowWeekInfo,
         showMoodMenu: mockShowMoodMenu,
@@ -268,6 +276,47 @@ describe('handleReplyKeyboardText', () => {
       expect(result).toBe(true);
       expect(mockSendMessage).toHaveBeenCalledWith(12345, 'Help text');
       expect(mockShowMainMenu).toHaveBeenCalledWith(12345);
+    });
+  });
+
+  describe('onboarding guard', () => {
+    it('блокирует reply-кнопки, если пользователь не существует', async () => {
+      mockGetUser.mockResolvedValue(null);
+
+      const result = await handleReplyKeyboardTextFn(12345, 'Моя неделя');
+
+      expect(result).toBe(true);
+      expect(mockSendMessage).toHaveBeenCalledWith(12345, '❌ Сначала заверши регистрацию. Используй /start.');
+      expect(mockShowWeekInfo).not.toHaveBeenCalled();
+    });
+
+    it('блокирует reply-кнопки, если пользователь не имеет языка', async () => {
+      mockGetUser.mockResolvedValue({ chatId: 12345 });
+
+      const result = await handleReplyKeyboardTextFn(12345, 'Дневник настроения');
+
+      expect(result).toBe(true);
+      expect(mockSendMessage).toHaveBeenCalledWith(12345, '❌ Сначала заверши регистрацию. Используй /start.');
+      expect(mockShowMoodMenu).not.toHaveBeenCalled();
+    });
+
+    it('блокирует reply-кнопки, если пользователь не имеет LMP', async () => {
+      mockGetUser.mockResolvedValue({ chatId: 12345, language: 'ru' });
+
+      const result = await handleReplyKeyboardTextFn(12345, 'Питание');
+
+      expect(result).toBe(true);
+      expect(mockSendMessage).toHaveBeenCalledWith(12345, '❌ Сначала заверши регистрацию. Используй /start.');
+      expect(mockShowNutritionMenu).not.toHaveBeenCalled();
+    });
+
+    it('пропускает reply-кнопки, если пользователь завершил онбординг', async () => {
+      mockGetUser.mockResolvedValue({ chatId: 12345, language: 'ru', lmpDate: '2026-01-15' });
+
+      const result = await handleReplyKeyboardTextFn(12345, 'Моя неделя');
+
+      expect(result).toBe(true);
+      expect(mockShowWeekInfo).toHaveBeenCalledWith(12345);
     });
   });
 });

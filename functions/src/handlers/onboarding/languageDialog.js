@@ -22,13 +22,21 @@ const { t, setLanguage } = require('../../i18n');
 const { getUser, createUser } = require('../../collections/users');
 const { sendMessage } = require('../../utils/telegram');
 
-// Lazy-load askForLmpDate to avoid circular references
+// Lazy-load dependencies to avoid circular references
 /** @type {((chatId: number|string) => Promise<void>)|null} */
 let _askForLmpDate = null;
 try {
   _askForLmpDate = require('./lmpDialog').askForLmpDate;
 } catch (_err) {
-  // FN-??? lmpDialog not merged yet — onboarding will not prompt for LMP
+  // lmpDialog not available — onboarding will not prompt for LMP
+}
+
+/** @type {((chatId: number|string) => Promise<Object>)|null} */
+let _sendReplyKeyboard = null;
+try {
+  _sendReplyKeyboard = require('../menu/mainMenu').sendReplyKeyboard;
+} catch (_err) {
+  // mainMenu not available — reply keyboard won't be shown
 }
 
 // ---------------------------------------------------------------------------
@@ -73,8 +81,11 @@ async function askLanguage(chatId) {
     const user = await _getUser(chatId);
 
     if (user && user.language) {
-      // If user has language but no lmpDate — redirect to LMP input
+      // If user has language but no lmpDate — show reply keyboard and redirect to LMP input
       if (!user.lmpDate && _askForLmpDate) {
+        if (_sendReplyKeyboard) {
+          await _sendReplyKeyboard(chatId);
+        }
         await _askForLmpDate(chatId);
         return { status: 'lmp_prompted' };
       }
@@ -142,6 +153,11 @@ async function handleLanguageChoice(chatId, callbackData, userInfo) {
       // Returning user — update language via setLanguage
       await _setLanguage(chatId, lang);
 
+      // Show reply keyboard for ongoing onboarding
+      if (_sendReplyKeyboard) {
+        await _sendReplyKeyboard(chatId);
+      }
+
       // If user has no lmpDate, continue onboarding
       if (!user.lmpDate && _askForLmpDate) {
         await _askForLmpDate(chatId);
@@ -163,6 +179,11 @@ async function handleLanguageChoice(chatId, callbackData, userInfo) {
     const langName = lang === 'ru' ? 'Русский' : 'English';
     const confirmText = await _t(chatId, 'onboarding.language_saved', { lang: langName });
     await _sendMessage(chatId, confirmText);
+
+    // Show reply keyboard immediately after language selection
+    if (_sendReplyKeyboard) {
+      await _sendReplyKeyboard(chatId);
+    }
 
     // For new users, continue onboarding: ask for LMP date
     if (isNewUser && _askForLmpDate) {
@@ -203,6 +224,7 @@ function __inject(deps) {
   if (deps.setLanguage) _setLanguage = deps.setLanguage;
   if (deps.sendMessage) _sendMessage = deps.sendMessage;
   if (deps.askForLmpDate !== undefined) _askForLmpDate = deps.askForLmpDate;
+  if (deps.sendReplyKeyboard !== undefined) _sendReplyKeyboard = deps.sendReplyKeyboard;
 }
 
 module.exports = { askLanguage, handleLanguageChoice, __inject };

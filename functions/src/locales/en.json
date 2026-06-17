@@ -26,7 +26,8 @@
     "edd_invalid_format": "❌ Invalid date format. Please enter the date in DD.MM.YYYY format.",
     "edd_before_lmp": "❌ Due date cannot be before the last menstrual period ({{lmp}}). Please enter a valid date.",
     "edd_too_late": "❌ Due date is too far from the last menstrual period (maximum 300 days). Please enter a valid date.",
-    "edd_saved": "✅ EDD {{edd}} saved! You've successfully completed setup."
+    "edd_saved": "✅ EDD {{edd}} saved! You've successfully completed setup.",
+    "complete_first": "❌ Please complete registration first. Use /start."
   },
   "menu": {
     "week_info": "📋 Week Info",

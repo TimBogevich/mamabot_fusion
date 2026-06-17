@@ -30,6 +30,7 @@ const mockT = vi.fn();
 const mockSetLanguage = vi.fn();
 const mockSendMessage = vi.fn();
 const mockAskForLmpDate = vi.fn();
+const mockSendReplyKeyboard = vi.fn();
 
 // ---------------------------------------------------------------------------
 // Module under test — loads real modules but we inject mocks via __inject()
@@ -50,6 +51,7 @@ __inject({
   setLanguage: mockSetLanguage,
   sendMessage: mockSendMessage,
   askForLmpDate: mockAskForLmpDate,
+  sendReplyKeyboard: mockSendReplyKeyboard,
 });
 
 // ---------------------------------------------------------------------------
@@ -74,6 +76,7 @@ describe('askLanguage', function () {
 
       expect(mockGetUser).toHaveBeenCalledWith(12345);
       expect(mockT).toHaveBeenCalledWith(12345, 'onboarding.already_registered');
+      expect(mockSendReplyKeyboard).not.toHaveBeenCalled();
       expect(mockSendMessage).toHaveBeenCalledWith(
         12345,
         '👋 Ты уже зарегистрирован(а)! Используй меню для навигации.',
@@ -88,11 +91,24 @@ describe('askLanguage', function () {
       const result = await askLanguage(12345);
 
       expect(mockT).toHaveBeenCalledWith(12345, 'onboarding.already_registered');
+      expect(mockSendReplyKeyboard).not.toHaveBeenCalled();
       expect(mockSendMessage).toHaveBeenCalledWith(
         12345,
         "👋 You're already registered! Use the menu to navigate.",
       );
       expect(result).toEqual({ status: 'already_registered' });
+    });
+
+    it('redirects to LMP and shows reply keyboard when user has no lmpDate', async function () {
+      mockGetUser.mockResolvedValue({ chatId: 12345, language: 'ru' });
+      mockAskForLmpDate.mockResolvedValue(undefined);
+
+      const result = await askLanguage(12345);
+
+      expect(mockSendReplyKeyboard).toHaveBeenCalledWith(12345);
+      expect(mockAskForLmpDate).toHaveBeenCalledWith(12345);
+      expect(mockSendMessage).not.toHaveBeenCalled();
+      expect(result).toEqual({ status: 'lmp_prompted' });
     });
 
     it('does NOT send reply_markup for returning users', async function () {
@@ -239,6 +255,7 @@ describe('handleLanguageChoice', function () {
       });
       expect(mockT).toHaveBeenCalledWith(12345, 'onboarding.language_saved', { lang: 'Русский' });
       expect(mockSendMessage).toHaveBeenCalledWith(12345, '✅ Русский язык установлен!');
+      expect(mockSendReplyKeyboard).toHaveBeenCalledWith(12345);
       expect(mockAskForLmpDate).toHaveBeenCalledWith(12345);
       expect(result).toEqual({ status: 'language_set', language: 'ru' });
     });
@@ -260,6 +277,7 @@ describe('handleLanguageChoice', function () {
       });
       expect(mockT).toHaveBeenCalledWith(12345, 'onboarding.language_saved', { lang: 'English' });
       expect(mockSendMessage).toHaveBeenCalledWith(12345, '✅ Language set to English!');
+      expect(mockSendReplyKeyboard).toHaveBeenCalledWith(12345);
       expect(mockAskForLmpDate).toHaveBeenCalledWith(12345);
       expect(result).toEqual({ status: 'language_set', language: 'en' });
     });
@@ -275,6 +293,7 @@ describe('handleLanguageChoice', function () {
 
       expect(mockSetLanguage).toHaveBeenCalledWith(12345, 'ru');
       expect(mockCreateUser).not.toHaveBeenCalled();
+      expect(mockSendReplyKeyboard).toHaveBeenCalledWith(12345);
       expect(mockAskForLmpDate).not.toHaveBeenCalled();
       expect(result).toEqual({ status: 'language_set', language: 'ru' });
     });
@@ -288,8 +307,23 @@ describe('handleLanguageChoice', function () {
 
       expect(mockSetLanguage).toHaveBeenCalledWith(12345, 'en');
       expect(mockCreateUser).not.toHaveBeenCalled();
+      expect(mockSendReplyKeyboard).toHaveBeenCalledWith(12345);
       expect(mockAskForLmpDate).not.toHaveBeenCalled();
       expect(result).toEqual({ status: 'language_set', language: 'en' });
+    });
+
+    it('calls sendReplyKeyboard and chains to LMP for returning user without lmpDate', async function () {
+      mockGetUser.mockResolvedValue({ chatId: 12345, language: 'ru' });
+      mockSetLanguage.mockResolvedValue('ru');
+
+      const result = await handleLanguageChoice(12345, 'lang_ru', userInfo);
+
+      expect(mockSetLanguage).toHaveBeenCalledWith(12345, 'ru');
+      expect(mockSendReplyKeyboard).toHaveBeenCalledWith(12345);
+      expect(mockAskForLmpDate).toHaveBeenCalledWith(12345);
+      // No confirmation message sent — user redirected to LMP input
+      expect(mockT).not.toHaveBeenCalledWith(12345, 'onboarding.language_saved');
+      expect(result).toEqual({ status: 'language_set', language: 'ru' });
     });
   });
 

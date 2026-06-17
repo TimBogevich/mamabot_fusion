@@ -137,6 +137,7 @@ async function handleReplyKeyboardText(chatId, text) {
   try {
     const tFn = (_injected && _injected.t !== undefined) ? _injected.t : t;
     const sendFn = (_injected && _injected.sendMessage !== undefined) ? _injected.sendMessage : sendMessage;
+    const getUserFn = (_injected && _injected.getUser !== undefined) ? _injected.getUser : getUser;
     const showMainMenu = (_injected && _injected.showMainMenu !== undefined) ? _injected.showMainMenu : _showMainMenu;
     const showWeekInfo = (_injected && _injected.showWeekInfo !== undefined) ? _injected.showWeekInfo : _showWeekInfo;
     const showMoodMenu = (_injected && _injected.showMoodMenu !== undefined) ? _injected.showMoodMenu : _showMoodMenu;
@@ -153,9 +154,27 @@ async function handleReplyKeyboardText(chatId, text) {
       { key: 'menu.help', handler: null, isHelp: true },
     ];
 
-    for (const btn of replyButtonMap) {
-      const label = await tFn(chatId, btn.key);
-      if (text === label) {
+    // Resolve all button labels in parallel
+    const labels = await Promise.all(replyButtonMap.map(b => tFn(chatId, b.key)));
+
+    // Check if text matches any reply button
+    for (let i = 0; i < replyButtonMap.length; i++) {
+      if (text === labels[i]) {
+        // ----- Onboarding guard -----
+        // If user hasn't completed onboarding (no language or no lmpDate),
+        // show a prompt and block the reply button from being dispatched.
+        try {
+          const user = await getUserFn(chatId);
+          if (!user || !user.language || !user.lmpDate) {
+            const completeFirstText = await tFn(chatId, 'onboarding.complete_first');
+            await sendFn(chatId, completeFirstText);
+            return true;
+          }
+        } catch (_err) {
+          // If getUser fails, fall through to normal routing
+        }
+
+        const btn = replyButtonMap[i];
         if (btn.isHelp) {
           const helpText = await tFn(chatId, 'help.message');
           await sendFn(chatId, helpText);

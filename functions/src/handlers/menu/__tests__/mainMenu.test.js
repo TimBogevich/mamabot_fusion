@@ -10,7 +10,7 @@ const mockSendMessage = vi.fn();
 
 const { createRequire } = require('node:module');
 const req = createRequire(import.meta.url);
-const { showMainMenu, __inject } = req('../mainMenu.js');
+const { showMainMenu, sendReplyKeyboard, __inject } = req('../mainMenu.js');
 
 __inject({ t: mockT, sendMessage: mockSendMessage });
 
@@ -23,7 +23,7 @@ const DEFAULT_T_VALUES = {
   'menu.invite_partner': 'Пригласить партнёра',
   'menu.settings': 'Настройки',
   'menu.help': 'Помощь',
-  'menu.show_button': '📋 Главное меню',
+  'menu.show_button': '\u{1F4CB} Главное меню',
   'menu.placeholder': 'Выбери раздел меню...',
 };
 
@@ -45,25 +45,31 @@ describe('showMainMenu', () => {
   });
 
   describe('t() calls', () => {
-    it('вызывает _t ровно 9 раз: заголовок + show_button + 6 reply-кнопок + placeholder', async () => {
+    it('вызывает _t ровно 10 раз: 2x menu.my_week + show_button + 6 reply-кнопок + placeholder', async () => {
       await showMainMenu(CHAT_ID);
-      expect(mockT).toHaveBeenCalledTimes(9);
+      // sendReplyKeyboard: headerText(menu.my_week) + 6 reply-labels + placeholder = 8 calls
+      // showMainMenu inline: headerText(menu.my_week) + show_button = 2 calls
+      // Total: 10 (8 from sendReplyKeyboard + 2 from showMainMenu inline)
+      expect(mockT).toHaveBeenCalledTimes(10);
     });
 
     it('все вызовы _t используют правильный chatId и ключи', async () => {
       await showMainMenu(CHAT_ID);
+      // sendReplyKeyboard runs first: headerText(my_week), then 6 labels + placeholder
       expect(mockT).toHaveBeenNthCalledWith(1, CHAT_ID, 'menu.my_week');
-      expect(mockT).toHaveBeenNthCalledWith(2, CHAT_ID, 'menu.show_button');
-      expect(mockT).toHaveBeenNthCalledWith(3, CHAT_ID, 'menu.my_week');
-      expect(mockT).toHaveBeenNthCalledWith(4, CHAT_ID, 'menu.mood_diary');
-      expect(mockT).toHaveBeenNthCalledWith(5, CHAT_ID, 'menu.nutrition');
-      expect(mockT).toHaveBeenNthCalledWith(6, CHAT_ID, 'menu.invite_partner');
-      expect(mockT).toHaveBeenNthCalledWith(7, CHAT_ID, 'menu.settings');
-      expect(mockT).toHaveBeenNthCalledWith(8, CHAT_ID, 'menu.help');
-      expect(mockT).toHaveBeenNthCalledWith(9, CHAT_ID, 'menu.placeholder');
+      expect(mockT).toHaveBeenNthCalledWith(2, CHAT_ID, 'menu.my_week');
+      expect(mockT).toHaveBeenNthCalledWith(3, CHAT_ID, 'menu.mood_diary');
+      expect(mockT).toHaveBeenNthCalledWith(4, CHAT_ID, 'menu.nutrition');
+      expect(mockT).toHaveBeenNthCalledWith(5, CHAT_ID, 'menu.invite_partner');
+      expect(mockT).toHaveBeenNthCalledWith(6, CHAT_ID, 'menu.settings');
+      expect(mockT).toHaveBeenNthCalledWith(7, CHAT_ID, 'menu.help');
+      expect(mockT).toHaveBeenNthCalledWith(8, CHAT_ID, 'menu.placeholder');
+      // Then showMainMenu inline: headerText + show_button
+      expect(mockT).toHaveBeenNthCalledWith(9, CHAT_ID, 'menu.my_week');
+      expect(mockT).toHaveBeenNthCalledWith(10, CHAT_ID, 'menu.show_button');
     });
 
-    it('порядок вызовов _t: заголовок, show_button, reply-кнопки, placeholder', async () => {
+    it('порядок вызовов _t: reply-кнопки, затем show_button', async () => {
       const callOrder = [];
       mockT.mockImplementation((chatId, key) => {
         callOrder.push(key);
@@ -72,7 +78,6 @@ describe('showMainMenu', () => {
       await showMainMenu(CHAT_ID);
       expect(callOrder).toEqual([
         'menu.my_week',
-        'menu.show_button',
         'menu.my_week',
         'menu.mood_diary',
         'menu.nutrition',
@@ -80,12 +85,14 @@ describe('showMainMenu', () => {
         'menu.settings',
         'menu.help',
         'menu.placeholder',
+        'menu.my_week',
+        'menu.show_button',
       ]);
     });
   });
 
   describe('количество sendMessage', () => {
-    it('_sendMessage вызывается ровно 2 раза (inline + reply)', async () => {
+    it('_sendMessage вызывается ровно 2 раза (reply + inline)', async () => {
       await showMainMenu(CHAT_ID);
       expect(mockSendMessage).toHaveBeenCalledTimes(2);
     });
@@ -101,63 +108,23 @@ describe('showMainMenu', () => {
     });
   });
 
-  describe('первый вызов — inline-сообщение', () => {
-    it('третий аргумент содержит reply_markup с inline_keyboard', async () => {
-      await showMainMenu(CHAT_ID);
-      const options = mockSendMessage.mock.calls[0][2];
-      expect(options).toHaveProperty('reply_markup');
-      expect(options.reply_markup).toHaveProperty('inline_keyboard');
-    });
-
-    it('inline_keyboard — массив из 1 строки (1 ряд)', async () => {
-      await showMainMenu(CHAT_ID);
-      const { inline_keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
-      expect(inline_keyboard).toHaveLength(1);
-    });
-
-    it('единственный ряд содержит 1 кнопку с callback_data = menu_show', async () => {
-      await showMainMenu(CHAT_ID);
-      const { inline_keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
-      expect(inline_keyboard[0]).toHaveLength(1);
-      expect(inline_keyboard[0][0].callback_data).toBe('menu_show');
-    });
-
-    it('текст inline-кнопки — menu.show_button', async () => {
-      await showMainMenu(CHAT_ID);
-      const { inline_keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
-      expect(inline_keyboard[0][0].text).toBe('📋 Главное меню');
-    });
-
-    it('первый вызов не содержит keyboard', async () => {
-      await showMainMenu(CHAT_ID);
-      const options = mockSendMessage.mock.calls[0][2];
-      expect(options.reply_markup).not.toHaveProperty('keyboard');
-    });
-
-    it('первый вызов не содержит resize_keyboard', async () => {
-      await showMainMenu(CHAT_ID);
-      const options = mockSendMessage.mock.calls[0][2];
-      expect(options.reply_markup).not.toHaveProperty('resize_keyboard');
-    });
-  });
-
-  describe('второй вызов — reply-клавиатура', () => {
+  describe('первый вызов — reply-клавиатура (sendReplyKeyboard)', () => {
     it('третий аргумент содержит reply_markup с keyboard', async () => {
       await showMainMenu(CHAT_ID);
-      const options = mockSendMessage.mock.calls[1][2];
+      const options = mockSendMessage.mock.calls[0][2];
       expect(options).toHaveProperty('reply_markup');
       expect(options.reply_markup).toHaveProperty('keyboard');
     });
 
     it('keyboard — массив из 3 строк (3 ряда)', async () => {
       await showMainMenu(CHAT_ID);
-      const { keyboard } = mockSendMessage.mock.calls[1][2].reply_markup;
+      const { keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
       expect(keyboard).toHaveLength(3);
     });
 
     it('первый ряд содержит 2 кнопки: my_week и mood_diary', async () => {
       await showMainMenu(CHAT_ID);
-      const { keyboard } = mockSendMessage.mock.calls[1][2].reply_markup;
+      const { keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
       expect(keyboard[0]).toHaveLength(2);
       expect(keyboard[0][0].text).toBe('Моя неделя');
       expect(keyboard[0][1].text).toBe('Дневник настроения');
@@ -165,7 +132,7 @@ describe('showMainMenu', () => {
 
     it('второй ряд содержит 2 кнопки: nutrition и invite_partner', async () => {
       await showMainMenu(CHAT_ID);
-      const { keyboard } = mockSendMessage.mock.calls[1][2].reply_markup;
+      const { keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
       expect(keyboard[1]).toHaveLength(2);
       expect(keyboard[1][0].text).toBe('Питание');
       expect(keyboard[1][1].text).toBe('Пригласить партнёра');
@@ -173,7 +140,7 @@ describe('showMainMenu', () => {
 
     it('третий ряд содержит 2 кнопки: settings и help', async () => {
       await showMainMenu(CHAT_ID);
-      const { keyboard } = mockSendMessage.mock.calls[1][2].reply_markup;
+      const { keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
       expect(keyboard[2]).toHaveLength(2);
       expect(keyboard[2][0].text).toBe('Настройки');
       expect(keyboard[2][1].text).toBe('Помощь');
@@ -181,20 +148,60 @@ describe('showMainMenu', () => {
 
     it('resize_keyboard = true', async () => {
       await showMainMenu(CHAT_ID);
-      const { resize_keyboard } = mockSendMessage.mock.calls[1][2].reply_markup;
+      const { resize_keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
       expect(resize_keyboard).toBe(true);
     });
 
     it('input_field_placeholder установлен', async () => {
       await showMainMenu(CHAT_ID);
-      const { input_field_placeholder } = mockSendMessage.mock.calls[1][2].reply_markup;
+      const { input_field_placeholder } = mockSendMessage.mock.calls[0][2].reply_markup;
       expect(input_field_placeholder).toBe('Выбери раздел меню...');
     });
 
-    it('второй вызов не содержит inline_keyboard', async () => {
+    it('первый вызов не содержит inline_keyboard', async () => {
+      await showMainMenu(CHAT_ID);
+      const options = mockSendMessage.mock.calls[0][2];
+      expect(options.reply_markup).not.toHaveProperty('inline_keyboard');
+    });
+  });
+
+  describe('второй вызов — inline-сообщение (showMainMenu)', () => {
+    it('третий аргумент содержит reply_markup с inline_keyboard', async () => {
       await showMainMenu(CHAT_ID);
       const options = mockSendMessage.mock.calls[1][2];
-      expect(options.reply_markup).not.toHaveProperty('inline_keyboard');
+      expect(options).toHaveProperty('reply_markup');
+      expect(options.reply_markup).toHaveProperty('inline_keyboard');
+    });
+
+    it('inline_keyboard — массив из 1 строки (1 ряд)', async () => {
+      await showMainMenu(CHAT_ID);
+      const { inline_keyboard } = mockSendMessage.mock.calls[1][2].reply_markup;
+      expect(inline_keyboard).toHaveLength(1);
+    });
+
+    it('единственный ряд содержит 1 кнопку с callback_data = menu_show', async () => {
+      await showMainMenu(CHAT_ID);
+      const { inline_keyboard } = mockSendMessage.mock.calls[1][2].reply_markup;
+      expect(inline_keyboard[0]).toHaveLength(1);
+      expect(inline_keyboard[0][0].callback_data).toBe('menu_show');
+    });
+
+    it('текст inline-кнопки — menu.show_button', async () => {
+      await showMainMenu(CHAT_ID);
+      const { inline_keyboard } = mockSendMessage.mock.calls[1][2].reply_markup;
+      expect(inline_keyboard[0][0].text).toBe('\u{1F4CB} Главное меню');
+    });
+
+    it('второй вызов не содержит keyboard', async () => {
+      await showMainMenu(CHAT_ID);
+      const options = mockSendMessage.mock.calls[1][2];
+      expect(options.reply_markup).not.toHaveProperty('keyboard');
+    });
+
+    it('второй вызов не содержит resize_keyboard', async () => {
+      await showMainMenu(CHAT_ID);
+      const options = mockSendMessage.mock.calls[1][2];
+      expect(options.reply_markup).not.toHaveProperty('resize_keyboard');
     });
   });
 
@@ -213,11 +220,93 @@ describe('showMainMenu', () => {
   });
 
   describe('return value', () => {
-    it('showMainMenu возвращает результат ПЕРВОГО вызова _sendMessage (inline)', async () => {
-      const expectedResult = { ok: true, result: { message_id: 99 } };
-      mockSendMessage.mockResolvedValue(expectedResult);
+    it('showMainMenu возвращает результат inline-сообщения (второй вызов _sendMessage)', async () => {
+      const inlineResult = { ok: true, result: { message_id: 99 } };
+      const replyResult = { ok: true, result: { message_id: 1 } };
+      mockSendMessage
+        .mockResolvedValueOnce(replyResult)  // sendReplyKeyboard (1st call)
+        .mockResolvedValueOnce(inlineResult);  // inline (2nd call)
       const result = await showMainMenu(CHAT_ID);
-      expect(result).toBe(expectedResult);
+      expect(result).toBe(inlineResult);
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests: sendReplyKeyboard
+// ---------------------------------------------------------------------------
+
+describe('sendReplyKeyboard', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setupDefaultMockT();
+    setupDefaultMockSendMessage();
+  });
+
+  it('sendReplyKeyboard(CHAT_ID) вызывает _sendMessage ровно 1 раз', async () => {
+    await sendReplyKeyboard(CHAT_ID);
+    expect(mockSendMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('вызов содержит reply_markup.keyboard — массив из 3 строк (3 ряда)', async () => {
+    await sendReplyKeyboard(CHAT_ID);
+    const { keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
+    expect(keyboard).toHaveLength(3);
+  });
+
+  it('первый ряд: my_week и mood_diary', async () => {
+    await sendReplyKeyboard(CHAT_ID);
+    const { keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
+    expect(keyboard[0][0].text).toBe('Моя неделя');
+    expect(keyboard[0][1].text).toBe('Дневник настроения');
+  });
+
+  it('второй ряд: nutrition и invite_partner', async () => {
+    await sendReplyKeyboard(CHAT_ID);
+    const { keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
+    expect(keyboard[1][0].text).toBe('Питание');
+    expect(keyboard[1][1].text).toBe('Пригласить партнёра');
+  });
+
+  it('третий ряд: settings и help', async () => {
+    await sendReplyKeyboard(CHAT_ID);
+    const { keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
+    expect(keyboard[2][0].text).toBe('Настройки');
+    expect(keyboard[2][1].text).toBe('Помощь');
+  });
+
+  it('resize_keyboard = true', async () => {
+    await sendReplyKeyboard(CHAT_ID);
+    const { resize_keyboard } = mockSendMessage.mock.calls[0][2].reply_markup;
+    expect(resize_keyboard).toBe(true);
+  });
+
+  it('input_field_placeholder установлен', async () => {
+    await sendReplyKeyboard(CHAT_ID);
+    const { input_field_placeholder } = mockSendMessage.mock.calls[0][2].reply_markup;
+    expect(input_field_placeholder).toBe('Выбери раздел меню...');
+  });
+
+  it('sendReplyKeyboard(null) возвращает rejected promise с Error("chatId is required")', async () => {
+    await expect(sendReplyKeyboard(null)).rejects.toThrow('chatId is required');
+  });
+
+  it('sendReplyKeyboard(0) НЕ выбрасывает (0 — валидный chatId)', async () => {
+    mockT.mockResolvedValue('header');
+    mockSendMessage.mockResolvedValue({ ok: true });
+    await expect(sendReplyKeyboard(0)).resolves.not.toThrow();
+  });
+
+  it('sendReplyKeyboard возвращает результат _sendMessage', async () => {
+    const expectedResult = { ok: true, result: { message_id: 7 } };
+    mockSendMessage.mockResolvedValue(expectedResult);
+    const result = await sendReplyKeyboard(CHAT_ID);
+    expect(result).toBe(expectedResult);
+  });
+
+  it('не содержит inline_keyboard', async () => {
+    await sendReplyKeyboard(CHAT_ID);
+    const options = mockSendMessage.mock.calls[0][2];
+    expect(options.reply_markup).not.toHaveProperty('inline_keyboard');
   });
 });
