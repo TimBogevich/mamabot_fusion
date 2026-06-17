@@ -420,7 +420,7 @@ FIRESTORE_EMULATOR_HOST=localhost:8080 npm run verify:users-schema
 
 ### CI Coverage
 
-The `verify:users-schema` step runs in CI on every push and pull request to `main`. See `.github/workflows/deploy.yml` and `.github/workflows/ci.yml`:
+The `verify:users-schema` step runs in CI on every push and pull request to `main`. See `.github/workflows/test.yml`:
 
 ```yaml
 - name: Verify users schema (emulator)
@@ -461,52 +461,24 @@ The script exits with code `0` on success or `1` on failure.
 
 ## CI/CD
 
-This project uses **GitHub Actions** for continuous integration with two workflows:
+This project uses **GitHub Actions** for continuous integration. The workflow is defined in [`.github/workflows/test.yml`](../.github/workflows/test.yml).
 
-### Workflow: `Deploy` ([`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml))
+### Workflow: `CI`
 
 | Trigger | Branch | Events |
 |---------|--------|--------|
-| `push` | `main` | Every commit to main |
+| `push` | `main` | Every commit |
+| `pull_request` | `main` | Every PR opened or updated |
 
-#### Job: `test` (deploy gate)
+### Job: `test`
 
-Runs on `ubuntu-latest` with Node.js 20. All checks must pass before deployment proceeds:
+Runs on `ubuntu-latest` with Node.js 20:
 
 1. **Checkout** — clones the repository
 2. **Setup Node.js 20** — configures Node.js via `actions/setup-node@v4`
 3. **Install dependencies** — `npm ci` in `functions/`
 4. **Run lint** — `npm run lint` (ESLint with flat config, CommonJS + ESM source types)
 5. **Run tests** — `npm test` (Vitest with `globals: true`, Node environment)
-6. **Verify users schema (emulator)** — runs `verify:users-schema` against the Firestore emulator
-
-#### Job: `deploy`
-
-Depends on `test` — only runs after the test job passes:
-
-1. **Checkout** — clones the repository
-2. **Setup Node.js 20** — configures Node.js
-3. **Install dependencies** — `npm ci` in `functions/`
-4. **Authenticate to Google Cloud** — uses `FIREBASE_SERVICE_ACCOUNT` secret
-5. **Deploy to Firebase** — deploys Cloud Functions and Firestore security rules: `npx firebase deploy --only functions,firestore:rules`
-6. **Health check** — waits 15 seconds, then curls the webhook endpoint to confirm the function responds with HTTP 200
-
-### Workflow: `CI` ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml))
-
-| Trigger | Branch | Events |
-|---------|--------|--------|
-| `pull_request` | `main` | Every PR opened or updated |
-
-#### Job: `test`
-
-Runs on `ubuntu-latest` with Node.js 20. Same checks as the deploy workflow's test job, but **no deploy step**:
-
-1. **Checkout** — clones the repository
-2. **Setup Node.js 20** — configures Node.js via `actions/setup-node@v4`
-3. **Install dependencies** — `npm ci` in `functions/`
-4. **Run lint** — `npm run lint`
-5. **Run tests** — `npm test`
-6. **Verify users schema (emulator)** — runs `verify:users-schema` against the Firestore emulator
 
 ### Integration tests in CI
 
@@ -514,7 +486,7 @@ Integration tests (e.g., `src/schemas/__tests__/pregnancy_data.integration.test.
 
 ### Merge gate
 
-The CI workflow status check must pass before merging to `main`. PRs with failing lint or unit tests cannot be merged.
+The workflow status check must pass before merging to `main`. PRs with failing lint or unit tests cannot be merged.
 
 ---
 

@@ -13,5 +13,5 @@ Telegram bot for pregnancy week-by-week tracking, mood logging, nutrition tracki
 ## Quick Start
 
 - See [AGENTS.md](AGENTS.md) for project overview and agent instructions
-- CI pipeline: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) and [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+- CI pipeline: [`.github/workflows/test.yml`](.github/workflows/test.yml)
 - Functions package: `functions/` directory
